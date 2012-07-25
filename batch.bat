@@ -1,0 +1,2 @@
+SET avidemux="C:\Program Files (x86)\Avidemux 2.5\avidemux2_cli.exe"
+FOR /R C:\Users\tanguest1\Desktop\Jessica_heterogeneous_vids %%f in (*.mov) do %avidemux% --force-alt-h264 --load "%%f" --run C:\Users\tanguest1\Desktop\Jessica_heterogeneous_vids\avidemux_batch.js --save "%%f.avi" --quit
