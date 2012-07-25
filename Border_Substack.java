@@ -63,6 +63,8 @@ public class Border_Substack implements PlugInFilter {
 				// Rectangle r = ip.getRoi();
 
 				// set threshold
+				//>> this is a paramter that should be set in the beginning and 
+				//>> have a reasonable name
 				double max = 140.0;	// starting threshold
 				max = setThresh(max, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
 			}
@@ -80,6 +82,11 @@ public class Border_Substack implements PlugInFilter {
 		}
 
 		imp.killRoi();
+		//>> ich glaube die ganze susbtack geschichte kann man sich sparen 
+		//>> wenn man einfach oben den for loop oben klug durchdenkt
+		//>> so lange lauffen bis fleigen auftauchen und da sich die anzahl
+		//>> der fleiegn pro frame merken. dadurch spart man sich den 
+		//>> substack kram sowie zwei methoden...
 		substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
 		detectFlies (ip2, imp2);
@@ -100,6 +107,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
+		//>> 8193, 0, 3 sind parameter die zentral gestezt werden sollten
 		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY);
 
 		if (rt.getCounter() < 2) {
