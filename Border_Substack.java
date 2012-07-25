@@ -17,13 +17,13 @@ public class Border_Substack implements PlugInFilter {
 	ImagePlus imp2;
 	ImageProcessor ip2;
 	ImageWindow iw;
-
+	//>> should probaly have a better name than k -> smth like fly_count?
 	private int k = 0;   // count for testing whether flies are in frame or not     
 	private Detect_Border db = new Detect_Border (); 
 
 	private int test = 0;
 	private double numberSlides = 0;
-
+	//>> stylguide -> nicht mehr als 80 Zeichen pro zeile!!
 	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
 
@@ -61,6 +61,8 @@ public class Border_Substack implements PlugInFilter {
 				// Rectangle r = ip.getRoi();
 
 				// set threshold
+				//>> this is a paramter that should be set in the beginning and 
+				//>> have a reasonable name
 				double max = 140.0;	// starting threshold
 				max = setThresh(max, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
 			}
@@ -78,6 +80,11 @@ public class Border_Substack implements PlugInFilter {
 		}
 
 		imp.killRoi();
+		//>> ich glaube die ganze susbtack geschichte kann man sich sparen 
+		//>> wenn man einfach oben den for loop oben klug durchdenkt
+		//>> so lange lauffen bis fleigen auftauchen und da sich die anzahl
+		//>> der fleiegn pro frame merken. dadurch spart man sich den 
+		//>> substack kram sowie zwei methoden...
 		substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
 		detectFlies (ip2, imp2);
@@ -98,6 +105,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
+		//>> 8193, 0, 3 sind parameter die zentral gestezt werden sollten
 		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY);
 
 		if (rt.getCounter() < 2) {
@@ -144,6 +152,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt2 = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 25, maxSize: flies not bigger than 150, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
+		//>> warum heist der rt2?
 		rt2 = db.tableAnalyser (imp, rt2, 8193, 0, 25, 150, 0.6, 0.8);
 
 		String [] splitt = new String [3];
@@ -255,6 +264,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt2 = Analyzer.getResultsTable();
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
+		//>> 9217, 0, 8, 150, 0, sind parameter die zentral gestezt werden sollten
 		rt2 = db.tableAnalyser (imp2, rt2, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
 
 		int particles = rt2.getCounter();
@@ -270,6 +280,7 @@ public class Border_Substack implements PlugInFilter {
 		imp2.setRoi(prSugar);		// set ROI
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
+		//>> 9217, 0, 8, 150, 0, sind parameter die zentral gestezt werden sollten
 		rt2 = db.tableAnalyser (imp2, rt2, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
 
 		particles = rt2.getCounter();

@@ -86,6 +86,7 @@ public class Detect_Border implements PlugInFilter {
 
 
 	// method to set the threshold
+	//>> setTresh gibt es doch in Border_Substack schon?
 	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
 
 		// setting the threshold
