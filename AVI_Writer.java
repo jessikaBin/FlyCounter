@@ -40,16 +40,28 @@ public class AVI_Writer implements PlugInFilter {
     }
 
     public void run(ImageProcessor ip) {
+	String path;
+	String filename;
+	path = Batch_Run.myDir2;
+	filename = Batch_Run.filename;
+        aviOutput (ip, path, filename);
+
+    }
+
+
+    public void aviOutput (ImageProcessor ip, String path, String filename) {
+
         try {
-            writeImage(imp);
+            writeImage(imp, path, filename);
             IJ.showStatus("");
         } catch (IOException e) {
             IJ.showMessage("AVI Writer", "An error occured writing the file.\n \n" + e);
         }
         IJ.showStatus("");
+
     }
     
-    public void writeImage(ImagePlus imp) throws IOException{
+    public void writeImage(ImagePlus imp, String path, String filename) throws IOException{
         long saveFileSize; // location of file size in bytes not counting first 8 bytes
         long saveLIST1Size; // location of length of CHUNK with first LIST - not including
                             // first 8 bytes with LIST and size.  JUNK follows the end of 
@@ -102,10 +114,10 @@ public class AVI_Writer implements PlugInFilter {
 //            return;
 //        String fileDir = sd.getDirectory();
 
-        String fileName = imp.getTitle()+".avi";
+        String fileName = filename + "_processed.avi";
         if (fileName == null)
             return;
-        String fileDir = "C:\\Users\\tanguest1\\Desktop\\" ;
+        String fileDir = path ;
 
 
         file = new File(fileDir + fileName);

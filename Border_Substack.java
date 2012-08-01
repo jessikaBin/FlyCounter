@@ -18,7 +18,7 @@ public class Border_Substack implements PlugInFilter {
 	ImageProcessor ip2;
 	ImageWindow iw;
 
-	private int k = 0;   // count for testing whether flies are in frame or not     
+	private int flyCount = 0;   // count for testing whether flies are in frame or not     
 	private Detect_Border db = new Detect_Border (); 
 
 	private int test = 0;
@@ -67,7 +67,7 @@ public class Border_Substack implements PlugInFilter {
 
 			findFlies (ip, imp);	// applying findFlies method
 
-			if ( k != 0) {	// flies are found in current slice
+			if ( flyCount != 0) {	// flies are found in current slice
 				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 				imp.setSlice(curr-2);
 
@@ -101,35 +101,35 @@ public class Border_Substack implements PlugInFilter {
 		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY);
 
 		if (rt.getCounter() < 2) {
-			if (test == 3) {
-			int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
-			imp.setSlice(curr+1);
-			test = 2;
-			max++;
-			imp.setRoi(x, y, rwidth, rheight);
-			setThresh (max, ip, imp, x, y, rwidth, rheight);
-			} else {
-			test = 2;
-			max++;
-			imp.setRoi(x, y, rwidth, rheight);
-			setThresh (max, ip, imp, x, y, rwidth, rheight);
-			}
+//			if (test == 3) {
+//				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
+//				imp.setSlice(curr+1);
+//				test = 2;
+				max++;
+//				imp.setRoi(x, y, rwidth, rheight);
+//				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//			} else {
+//				test = 2;
+//				max++;
+//				imp.setRoi(x, y, rwidth, rheight);
+				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//			}
 		}
 
 		if (rt.getCounter() > 3) {
-			if (test ==2) {
-			int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
-			imp.setSlice(curr+1);
-			test = 3;
-			max++;
-			imp.setRoi(x, y, rwidth, rheight);
-			setThresh (max, ip, imp, x, y, rwidth, rheight);
-			} else  {
-			test = 3;
-			max--;
-			imp.setRoi(x, y, rwidth, rheight);
-			setThresh (max, ip, imp, x, y, rwidth, rheight);
-			}
+//			if (test == 2) {
+//				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
+//				imp.setSlice(curr+1);
+//				test = 3;
+				max++;
+//				imp.setRoi(x, y, rwidth, rheight);
+//				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//			} else  {
+//				test = 3;
+//				max--;
+//				imp.setRoi(x, y, rwidth, rheight);
+				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//			}
 		}
 
 		return max;
@@ -141,16 +141,16 @@ public class Border_Substack implements PlugInFilter {
 	private int findFlies (ImageProcessor ip, ImagePlus imp) {
 
 		// define results table
-		ResultsTable rt2 = Analyzer.getResultsTable();
+		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 25, maxSize: flies not bigger than 150, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
-		rt2 = db.tableAnalyser (imp, rt2, 8193, 0, 25, 150, 0.6, 0.8);
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 25, 150, 0.6, 0.8);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity
 
-		for (int i =0; i<=rt2.getCounter()-1; i++){	// circularity values of results table are saved in array list
-			String row = rt2.getRowAsString(i);
+		for (int i =0; i<=rt.getCounter()-1; i++){	// circularity values of results table are saved in array list
+			String row = rt.getRowAsString(i);
 			splitt =  row.split(",");
 			if (splitt.length == 1){
 				splitt = row.split("\t");
@@ -159,13 +159,13 @@ public class Border_Substack implements PlugInFilter {
 			circ.add(c);
 		}
 
-		k = 0;	// count is set to 0
+		flyCount = 0;	// count is set to 0
 
 		if (circ.size() >= 2){
-			k++;
+			flyCount++;
 		}
 
-		return k;
+		return flyCount;
 	}
 
 	
@@ -252,12 +252,12 @@ public class Border_Substack implements PlugInFilter {
 		ip2.setThreshold(minThreshold, max, 0);	
 
 		// define results table
-		ResultsTable rt2 = Analyzer.getResultsTable();
+		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt2 = db.tableAnalyser (imp2, rt2, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
+		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
 
-		int particles = rt2.getCounter();
+		int particles = rt.getCounter();
 		summaryWater.put(i, particles);
 
 		imp2.killRoi();
@@ -270,9 +270,9 @@ public class Border_Substack implements PlugInFilter {
 		imp2.setRoi(prSugar);		// set ROI
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt2 = db.tableAnalyser (imp2, rt2, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
+		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
 
-		particles = rt2.getCounter();
+		particles = rt.getCounter();
 		summarySugar.put(i, particles);
 
 	}
