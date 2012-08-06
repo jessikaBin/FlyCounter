@@ -24,6 +24,8 @@ public class Border_Substack implements PlugInFilter {
 	private int test = 0;
 	private double numberSlides = 0;
 
+	private double maxThreshold = Batch_Run.flyThreshold;
+
 	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
 
@@ -211,8 +213,8 @@ public class Border_Substack implements PlugInFilter {
 			imp2.setSlice(i);	// current slice is set
 
 			// set threshold
-			double max = 100.0;	// starting threshold
-			countFlies(max, ip2, imp2, i, summaryWater, summarySugar);	// applying setThresh method
+
+			countFlies(maxThreshold, ip2, imp2, i, summaryWater, summarySugar);	// applying setThresh method
 
 		}
 
