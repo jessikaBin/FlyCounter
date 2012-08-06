@@ -101,7 +101,8 @@ for file_number = 1:length(avi_files)
 %    dirname=strread(filename,'%s','delimiter','.');
 %    mkdir(char(dirname(1)));
     
-    writerObj = VideoWriter(strcat('./',filename,'.avi'));
+    name = filename(1:end-8);
+    writerObj = VideoWriter(strcat('./',name,'.avi'));
     writerObj.FrameRate =5;
     open(writerObj);
     
