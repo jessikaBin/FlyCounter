@@ -86,6 +86,10 @@ public class Detect_Border implements PlugInFilter {
 
 
 	// method to set the threshold
+	//>> setTresh gibt es doch in Border_Substack schon?
+	//>> Die Rekursion hat nicht wirklich eine vernuenftige 
+	//>> terminationsbedingung und die xy werte werden auch mehrfach 
+	//>> gespeicher. vieleicht wäre eine else abzweigung ganz gut?
 	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
 
 		// setting the threshold
