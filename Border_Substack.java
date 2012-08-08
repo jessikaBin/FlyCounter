@@ -23,9 +23,7 @@ public class Border_Substack implements PlugInFilter {
 
 	private int test = 0;
 	private double numberSlides = 0;
-
-	private double maxThreshold = Batch_Run.flyThreshold;
-
+	//>> stylguide -> nicht mehr als 80 Zeichen pro zeile!!
 	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
 

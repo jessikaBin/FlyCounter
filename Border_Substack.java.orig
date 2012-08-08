@@ -29,7 +29,7 @@ public class Border_Substack implements PlugInFilter {
 
 =======
 	//>> stylguide -> nicht mehr als 80 Zeichen pro zeile!!
->>>>>>> code review in Border_Substack and Detect_Border
+>>>>>>> 56590a80ca06114585d109d2cc48fe5f5c73a447
 	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
 
