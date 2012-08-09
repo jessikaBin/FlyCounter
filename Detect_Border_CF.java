@@ -84,21 +84,6 @@ public class Detect_Border_CF implements PlugInFilter {
 	}
 
 
-	public float [] getXPoints () {
-
-		return xPoints;	
-	
-	}
-
-
-	public float [] getYPoints () {
-
-		return yPoints;	
-	
-	}
-	
-	
-		
 	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
 
 		// setting the threshold
@@ -128,8 +113,8 @@ public class Detect_Border_CF implements PlugInFilter {
 		else {
 		// read x and y coordinates from results table
 		String [] splitt = new String [3];
-		double [] xcoo = new double [6];
-		double [] ycoo = new double [6];
+		double [] xcoo = new double [rt.getCounter()];
+		double [] ycoo = new double [rt.getCounter()];
 				
 		for (int i =0; i<=rt.getCounter()-1; i++){
 			String row = rt.getRowAsString(i);
@@ -152,17 +137,13 @@ public class Detect_Border_CF implements PlugInFilter {
 		params = cf.getParams();
 		result = cf.getResultString();
 		
+		
 		}
 
 		return max;
 
 	}
 	
-	public String getString () {
-
-		return result;	
-	
-	}
 
 	// method to draw the border 
 	private void drawBorder (ImageProcessor ip, ImagePlus imp) {
@@ -186,10 +167,29 @@ public class Detect_Border_CF implements PlugInFilter {
 		
 			GenericDialog gd = new GenericDialog("Set Threshold");
 			for (int j = 0; j < yPoints.length; j++){
-	      	gd.addNumericField("y", yPoints[j], 0);
+	     	gd.addNumericField("y", yPoints[j], 0);
 			}
 
-	      	gd.showDialog();
+	     	gd.showDialog();
+	}
+	
+	public float [] getXPoints () {
+
+		return xPoints;	
+	
+	}
+
+
+	public float [] getYPoints () {
+
+		return yPoints;	
+	
+	}
+	
+	public String getString () {
+
+		return result;	
+	
 	}
 
 }

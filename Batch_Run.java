@@ -47,7 +47,7 @@ public class Batch_Run implements PlugIn {
 			IJ.log((FileNumber+1)+":"+myListSources[FileNumber]);
 			IJ.showStatus(FileNumber+"/"+myListSources.length);				
 
-			if (myListSources[FileNumber].contains(".avi")) {
+			if (myListSources[FileNumber].contains(".avi") && !(myListSources[FileNumber].contains(".MOV.avi"))) {
 
 				filename = myListSources[FileNumber].substring(0, myListSources[FileNumber].length()-4);
 
@@ -120,13 +120,15 @@ public class Batch_Run implements PlugIn {
 		Set set = summaryWater.entrySet(); 
 		Iterator i = set.iterator(); 
 
-		output.write("Slice" + "\t" + "Count Water " + "\t" + "Count Sugar" + "\n");
+		output.write("Slice" + "\t" + "Count Water " + "\t" + "Count Sugar" + "\t" + "Total Count" + "\n");
 
 		while (i.hasNext()) { 
 			Map.Entry me = (Map.Entry)i.next(); 
-			output.write(me.getKey() + "\t" + me.getValue() + "\t" + summarySugar.get(me.getKey()) + "\n"); 
+			output.write(me.getKey() + "\t" + me.getValue() + "\t" + summarySugar.get(me.getKey()) + "\t" + (((Integer)me.getValue()).intValue()+summarySugar.get(me.getKey())) + "\n"); 
 		} 
-
+		
+		output.write(bs.getString());
+		
   		output.close();
 
 	}

@@ -18,15 +18,22 @@ public class Border_Substack implements PlugInFilter {
 	ImageProcessor ip2;
 	ImageWindow iw;
 
-	private int flyCount = 0;   // count for testing whether flies are in frame or not     
-	private Detect_Border db = new Detect_Border (); 
+	private int flyCount = 0;   // count for testing whether flies are in frame or not  
+	
+//	private Detect_Border db = new Detect_Border (); 
+	private Detect_Border_CF db = new Detect_Border_CF (); 
+	
+	public String result = "";
 
 	private int test = 0;
 	private double numberSlides = 0;
-	//>> stylguide -> nicht mehr als 80 Zeichen pro zeile!!
+
+	private double startingThreshold = 140.0;					// starting threshold for border detection
+	private double maxThreshold = Batch_Run.flyThreshold;		// threshold for detecting the flies
+
 	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
-
+	
 
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
@@ -61,30 +68,24 @@ public class Border_Substack implements PlugInFilter {
 				// Rectangle r = ip.getRoi();
 
 				// set threshold
-				//>> this is a paramter that should be set in the beginning and 
-				//>> have a reasonable name
-				double max = 140.0;	// starting threshold
-				max = setThresh(max, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
+				double startingThreshold = 140.0;	// starting threshold
+				startingThreshold = setThresh(startingThreshold, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
 			}
 
-			findFlies (ip, imp);	// applying findFlies method
+			findFirstFlies (ip, imp);	// applying findFirstFlies method
 
 			if ( flyCount != 0) {	// flies are found in current slice
 				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 				imp.setSlice(curr-2);
 
 				db.run(ip);
+				result = db.getString ();
 				break;	
 			}
 
 		}
 
 		imp.killRoi();
-		//>> ich glaube die ganze susbtack geschichte kann man sich sparen 
-		//>> wenn man einfach oben den for loop oben klug durchdenkt
-		//>> so lange lauffen bis fleigen auftauchen und da sich die anzahl
-		//>> der fleiegn pro frame merken. dadurch spart man sich den 
-		//>> substack kram sowie zwei methoden...
 		substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
 		detectFlies (ip2, imp2);
@@ -93,19 +94,22 @@ public class Border_Substack implements PlugInFilter {
 
 	}
 
+	public String getString () {
 
+		return result;	
+	
+	}
 
 	// method to set the threshold in the first frame 
-	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
+	private double setThresh (double startingThreshold, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
 
 		double minThreshold = 0.0;
-		ip.setThreshold(minThreshold, max, 0);	
+		ip.setThreshold(minThreshold, startingThreshold, 0);	
 				
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
-		//>> 8193, 0, 3 sind parameter die zentral gestezt werden sollten
 		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY);
 
 		if (rt.getCounter() < 2) {
@@ -113,14 +117,14 @@ public class Border_Substack implements PlugInFilter {
 //				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 //				imp.setSlice(curr+1);
 //				test = 2;
-				max++;
+				startingThreshold++;
 //				imp.setRoi(x, y, rwidth, rheight);
-//				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			} else {
 //				test = 2;
-//				max++;
+//				startingThreshold++;
 //				imp.setRoi(x, y, rwidth, rheight);
-				setThresh (max, ip, imp, x, y, rwidth, rheight);
+				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			}
 		}
 
@@ -129,24 +133,24 @@ public class Border_Substack implements PlugInFilter {
 //				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 //				imp.setSlice(curr+1);
 //				test = 3;
-				max++;
+				startingThreshold++;
 //				imp.setRoi(x, y, rwidth, rheight);
-//				setThresh (max, ip, imp, x, y, rwidth, rheight);
+//				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			} else  {
 //				test = 3;
-//				max--;
+//				startingThreshold--;
 //				imp.setRoi(x, y, rwidth, rheight);
-				setThresh (max, ip, imp, x, y, rwidth, rheight);
+				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			}
 		}
 
-		return max;
+		return startingThreshold;
 
 	}
 
 
-	// method to find flies in frame
-	private int findFlies (ImageProcessor ip, ImagePlus imp) {
+	// method to find first flies in frame
+	private int findFirstFlies (ImageProcessor ip, ImagePlus imp) {
 
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
@@ -241,7 +245,7 @@ public class Border_Substack implements PlugInFilter {
 		return imp2;
 	}
 
-	private void countFlies (double max, ImageProcessor ip2, ImagePlus imp2, int i, TreeMap <Integer, Integer> summaryWater, TreeMap <Integer, Integer> summarySugar) {
+	private void countFlies (double maxThreshold, ImageProcessor ip2, ImagePlus imp2, int i, TreeMap <Integer, Integer> summaryWater, TreeMap <Integer, Integer> summarySugar) {
 
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
@@ -249,6 +253,13 @@ public class Border_Substack implements PlugInFilter {
 
 		float [] xPoints = db.getXPoints (); 
 		float [] yPoints = db.getYPoints ();   
+		
+					// GenericDialog gd = new GenericDialog("Set Threshold");
+			// for (int j = 0; j < yPoints.length; j++){
+	     	// gd.addNumericField("y", yPoints[j], 0);
+			// }
+
+	     	// gd.showDialog();
 
 		ip2.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
 
@@ -257,7 +268,7 @@ public class Border_Substack implements PlugInFilter {
 		imp2.setRoi(prWater);		// set ROI
 
 		double minThreshold = 0.0;
-		ip2.setThreshold(minThreshold, max, 0);	
+		ip2.setThreshold(minThreshold, maxThreshold, 0);	
 
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
@@ -271,7 +282,7 @@ public class Border_Substack implements PlugInFilter {
 		imp2.killRoi();
 
 		float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
-		float [] yPoints2 = {yPoints[1]+1, (float) ip2.getHeight(),(float)  ip2.getHeight(), yPoints[2]+1};  
+		float [] yPoints2 = {yPoints[1]+1, (float) ip2.getHeight(),(float) ip2.getHeight(), yPoints[2]+1};  
 
 		Roi prSugar = new PolygonRoi(xPoints2, yPoints2, nPoints, type);
 
@@ -285,6 +296,5 @@ public class Border_Substack implements PlugInFilter {
 
 	}
 	
-
 
 }
