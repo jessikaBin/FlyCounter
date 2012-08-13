@@ -120,7 +120,7 @@ public class Detect_Border_CF implements PlugInFilter {
 				for (int rw = 0; rw <= rwidth; rw++) {
 					int beginX = x+rw;
 					int beginY = y+rh;
-						if (ip.getPixel(beginX, beginY) >= max) {
+						if (ip.getPixel(beginX, beginY) <= max) {
 							roiX.add(beginX);
 							roiY.add(beginY);
 						}
@@ -134,6 +134,11 @@ public class Detect_Border_CF implements PlugInFilter {
 				xcoo[j] = (double)roiX.get(j);
 				ycoo[j] = (double)roiY.get(j);
 			}
+			
+			GenericDialog gd = new GenericDialog("Set Threshold");
+	      	gd.addNumericField("r", max, 0);
+
+	      	gd.showDialog();
 
 			double [] initialParams = {156,0.01};
 		
