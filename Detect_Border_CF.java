@@ -48,11 +48,11 @@ public class Detect_Border_CF implements PlugInFilter {
 		xwidth = (float) width;
 		
 		int rwidth = width/2;	// width
-		int rheight = height/4;	// height
+		int rheight = height/8;	// height
 		int x = width/4;		// upper left x coordinate
-		int y = 3*height/8;	// upper left y coordinate
+		int y = 7*height/16;	// upper left y coordinate
 		
-		
+			
 		imp.setRoi(x, y, rwidth, rheight);		// set ROI 1
 
 		imp.repaintWindow();
@@ -104,38 +104,45 @@ public class Detect_Border_CF implements PlugInFilter {
 		}
 
 		// invoke method recursive with a lower threshold, if too many particles are thresholded
-		else if (rt.getCounter() >6) {
+		else if (rt.getCounter() > 6) {
 			max--;
 			imp.setRoi(x, y, rwidth, rheight);
 			max = setThresh(max, ip, imp, x, y, rwidth, rheight);
 		}
 
 		else {
-		// read x and y coordinates from results table
-		String [] splitt = new String [3];
-		double [] xcoo = new double [rt.getCounter()];
-		double [] ycoo = new double [rt.getCounter()];
-				
-		for (int i =0; i<=rt.getCounter()-1; i++){
-			String row = rt.getRowAsString(i);
-			splitt =  row.split(",");
-
-			if (splitt.length == 1){
-				splitt = row.split("\t");
+		
+			ArrayList <Integer> roiX = new ArrayList <Integer> ();	// x coordinates of detected border ROI
+			ArrayList <Integer> roiY = new ArrayList <Integer> ();	// y coordinates of detected border ROI 
+		
+		
+			for (int rh = 0; rh <= rheight; rh++) {
+				for (int rw = 0; rw <= rwidth; rw++) {
+					int beginX = x+rw;
+					int beginY = y+rh;
+						if (ip.getPixel(beginX, beginY) >= max) {
+							roiX.add(beginX);
+							roiY.add(beginY);
+						}
+				}
+			}
+		
+			double [] xcoo = new double [roiX.size()];
+			double [] ycoo = new double [roiY.size()];
+		
+			for ( int j = 0; j < roiX.size();j++){
+				xcoo[j] = (double)roiX.get(j);
+				ycoo[j] = (double)roiY.get(j);
 			}
 
-			xcoo[i] = Double.valueOf(splitt[2]);
-			ycoo[i] = Double.valueOf(splitt[3]);
-		}
-
-		double [] initialParams = {156,0.01};
+			double [] initialParams = {156,0.01};
 		
-		CurveFitter cf = new CurveFitter(xcoo, ycoo);
+			CurveFitter cf = new CurveFitter(xcoo, ycoo);
 
-		cf.doCustomFit("y = a + b*x", initialParams, true);
+			cf.doCustomFit("y = a + b*x", initialParams, false);
 		
-		params = cf.getParams();
-		result = cf.getResultString();
+			params = cf.getParams();
+			result = cf.getResultString();
 		
 		
 		}
@@ -165,12 +172,6 @@ public class Detect_Border_CF implements PlugInFilter {
 			imp.setRoi(pr);	// draw detected border ROI
 		}
 		
-			GenericDialog gd = new GenericDialog("Set Threshold");
-			for (int j = 0; j < yPoints.length; j++){
-	     	gd.addNumericField("y", yPoints[j], 0);
-			}
-
-	     	gd.showDialog();
 	}
 	
 	public float [] getXPoints () {
