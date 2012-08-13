@@ -93,8 +93,8 @@ public class Detect_Border_CF implements PlugInFilter {
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
 
-		// measurements: area & center of mass, options: show nothing, minSize: particle not smaller than 3, maxSize: particle not bigger than 100, minCirc/maxCirc: no  defined circularity
-		rt = tableAnalyser (imp, rt, 65, 0, 2, 200, 0, Double.POSITIVE_INFINITY);
+		// measurements: area & center of mass, options: show nothing, minSize: particle not smaller than 3, maxSize: particle not bigger than 200, minCirc/maxCirc: no  defined circularity
+		rt = tableAnalyser (imp, rt, 65, 0, 3, 200, 0, Double.POSITIVE_INFINITY);
 
 		// invoke method recursive with a higher threshold, if no particle is thresholded
 		if (rt.getCounter() < 2) {

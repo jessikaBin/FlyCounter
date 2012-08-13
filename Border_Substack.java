@@ -123,7 +123,7 @@ public class Border_Substack implements PlugInFilter {
 //			} else {
 //				test = 2;
 //				startingThreshold++;
-//				imp.setRoi(x, y, rwidth, rheight);
+				imp.setRoi(x, y, rwidth, rheight);
 				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			}
 		}
@@ -139,7 +139,7 @@ public class Border_Substack implements PlugInFilter {
 //			} else  {
 //				test = 3;
 //				startingThreshold--;
-//				imp.setRoi(x, y, rwidth, rheight);
+				imp.setRoi(x, y, rwidth, rheight);
 				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			}
 		}
@@ -156,7 +156,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 25, maxSize: flies not bigger than 150, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 25, 150, 0.6, 0.8);
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 25, 300, 0.6, 0.8);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity
