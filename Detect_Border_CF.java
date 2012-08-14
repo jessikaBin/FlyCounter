@@ -82,6 +82,7 @@ public class Detect_Border_CF implements PlugInFilter {
 		return rt;
 
 	}
+	
 
 
 	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
@@ -94,7 +95,7 @@ public class Detect_Border_CF implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & center of mass, options: show nothing, minSize: particle not smaller than 3, maxSize: particle not bigger than 200, minCirc/maxCirc: no  defined circularity
-		rt = tableAnalyser (imp, rt, 65, 0, 3, 200, 0, Double.POSITIVE_INFINITY);
+		rt = tableAnalyser (imp, rt, 65, 0, 3, 200, 0, 1);
 
 		// invoke method recursive with a higher threshold, if no particle is thresholded
 		if (rt.getCounter() < 2) {
@@ -135,10 +136,10 @@ public class Detect_Border_CF implements PlugInFilter {
 				ycoo[j] = (double)roiY.get(j);
 			}
 			
-			GenericDialog gd = new GenericDialog("Set Threshold");
-	      	gd.addNumericField("r", max, 0);
+			// GenericDialog gd = new GenericDialog("Set Threshold");
+	      	// gd.addNumericField("r", max, 0);
 
-	      	gd.showDialog();
+	      	// gd.showDialog();
 
 			double [] initialParams = {156,0.01};
 		

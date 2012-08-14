@@ -110,7 +110,7 @@ public class Batch_Run implements PlugIn {
 
 		String title = imp2.getTitle();
 
-		File file = new File(MyDir2 + title.substring(0,title.length()-2) + ".xls");
+		File file = new File(MyDir2 + title.substring(0,title.length()-2) + "_" + flyThreshold + ".xls");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 
 		ArrayList <TreeMap <Integer, Integer>> summaries = bs.getMaps ();
@@ -127,7 +127,7 @@ public class Batch_Run implements PlugIn {
 			output.write(me.getKey() + "\t" + me.getValue() + "\t" + summarySugar.get(me.getKey()) + "\t" + (((Integer)me.getValue()).intValue()+summarySugar.get(me.getKey())) + "\n"); 
 		} 
 		
-		output.write(bs.getString());
+	//	output.write(bs.getString());
 		
   		output.close();
 

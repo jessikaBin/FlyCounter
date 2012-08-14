@@ -73,7 +73,7 @@ public class Border_Substack implements PlugInFilter {
 			}
 
 			findFirstFlies (ip, imp);	// applying findFirstFlies method
-
+			
 			if ( flyCount != 0) {	// flies are found in current slice
 				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 				imp.setSlice(curr-2);
@@ -110,7 +110,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, Double.POSITIVE_INFINITY);
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, 1);
 
 		if (rt.getCounter() < 2) {
 //			if (test == 3) {
@@ -253,13 +253,6 @@ public class Border_Substack implements PlugInFilter {
 
 		float [] xPoints = db.getXPoints (); 
 		float [] yPoints = db.getYPoints ();   
-		
-					// GenericDialog gd = new GenericDialog("Set Threshold");
-			// for (int j = 0; j < yPoints.length; j++){
-	     	// gd.addNumericField("y", yPoints[j], 0);
-			// }
-
-	     	// gd.showDialog();
 
 		ip2.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
 
@@ -274,7 +267,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
+		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
 
 		int particles = rt.getCounter();
 		summaryWater.put(i, particles);
@@ -289,7 +282,7 @@ public class Border_Substack implements PlugInFilter {
 		imp2.setRoi(prSugar);		// set ROI
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, Double.POSITIVE_INFINITY);
+		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
 
 		particles = rt.getCounter();
 		summarySugar.put(i, particles);

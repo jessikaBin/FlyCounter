@@ -1,12 +1,6 @@
-% Shoh's awesome script
-% written for Vlad's awesome work
-% unlimited beer will be mine.
 
 % copy this file to the folder with the '.avi'
 % movie files inside.
-
-% Requires Matlab with "image processing" toolbox (I think)
-
 
 % first of all, lets get a list of all video files
 avi_files = dir('*.avi');
@@ -39,14 +33,6 @@ for file_number = 1:length(avi_files)
     % ...and make it one dimensional.
     frame= frame(:,:,1);
 
-    % Insert diameter/radius here
-    % radius = 315/2;
-    
-    % Define circle mask, first dimension of image
-    % Keep this thing close (bit bigger) to diameter
-    % rows = 320;
-    % cols = 320;
-    
     % where to put the circle
     center = [rows/2 cols/2];  % In [X,Y] coordinates
     
@@ -66,7 +52,6 @@ for file_number = 1:length(avi_files)
     % then give us where it is located (row/col)
     [rmax cmax] = find(xcorrelation == [max(max(xcorrelation))]);
 
-    
     % From here:
     % procede with that information, and draw a circle inside
     % a rectangular canvas with same size as movie.
@@ -95,18 +80,12 @@ for file_number = 1:length(avi_files)
     
     white_mask = 1-fitted_mask;
     
-    
     % Output directory of image files
-    % I chose the video name (without extension)
-%    dirname=strread(filename,'%s','delimiter','.');
-%    mkdir(char(dirname(1)));
-    
     name = filename(1:end-8);
     writerObj = VideoWriter(strcat('./',name,'.avi'));
     writerObj.FrameRate =5;
     open(writerObj);
     
-       
     % Here is the main work. Pretty nicely packed inside a few commands!
     % loop over all frames within the movie
     for k = 1 : number_frames
@@ -125,41 +104,11 @@ for file_number = 1:length(avi_files)
         % crop image to only show important part
         masked_f = imcrop(masked_f,[cmax-rows rmax-cols rows cols]);
           
-      %  masked_f=im2uint8(masked_f);
-
-
         writeVideo(writerObj,masked_f);
 
-        
         % write out the frame inside folder as tif file.
         % imwrite(masked_f,strcat('./',char(dirname(1)),'/',num2str(k),'.tif'));
     end
     close(writerObj);
-% Tadaaa - unlimited beer.
+
 end
-
-
-
-
-
-
-
-% some things maybe to implement later
-
-%frame=im2double(frame);
-    %imtool(frame.*fitted_mask)
-    % Preallocate movie structure.
-    %mov(1:number_frames) = ...
-    %    struct('cdata', zeros(vlad.Height, vlad.Width, 3, 'double'),...
-    %           'colormap', []);
-    %%%
-    %for k = 1 : number_frames
-    %    oriframe= videovlad(:,:,:,k);
-    %    oriframe=oriframe(:,:,1);
-    %    masked_f=im2double(oriframe).*fitted_mask;
-    %    masked_f=im2uint8(masked_f);
-    %    mov(k).cdata = masked_f;
-    %    mov(k).colormap='gray';
-    %end
-    %%%
-
