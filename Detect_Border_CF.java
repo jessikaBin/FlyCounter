@@ -24,6 +24,7 @@ public class Detect_Border_CF implements PlugInFilter {
 	private float xwidth = (float)0.0;	// float width of image
 	private double max;
 	public double [] params = new double [2];
+	public int goBack;
 
 	ArrayList <Float> xa = new ArrayList <Float> ();	// x coordinates of detected border ROI
 	ArrayList <Float> ya = new ArrayList <Float> ();	// y coordinates of detected border ROI 	
@@ -136,11 +137,6 @@ public class Detect_Border_CF implements PlugInFilter {
 				ycoo[j] = (double)roiY.get(j);
 			}
 			
-			// GenericDialog gd = new GenericDialog("Set Threshold");
-	      	// gd.addNumericField("r", max, 0);
-
-	      	// gd.showDialog();
-
 			double [] initialParams = {156,0.01};
 		
 			CurveFitter cf = new CurveFitter(xcoo, ycoo);
@@ -149,8 +145,13 @@ public class Detect_Border_CF implements PlugInFilter {
 		
 			params = cf.getParams();
 			result = cf.getResultString();
-		
-		
+			
+			if (params[1] > 0.03 || params[1] < -0.03) {
+				imp.setSlice(imp.getCurrentSlice()-1);
+				run(ip);
+			
+			}
+			
 		}
 
 		return max;

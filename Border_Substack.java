@@ -112,7 +112,7 @@ public class Border_Substack implements PlugInFilter {
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
 		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, 1);
 
-		if (rt.getCounter() < 2) {
+		if (rt.getCounter() == 0) {
 //			if (test == 3) {
 //				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 //				imp.setSlice(curr+1);
@@ -127,8 +127,33 @@ public class Border_Substack implements PlugInFilter {
 				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
 //			}
 		}
+		
+		else if (rt.getCounter () == 1) {
+			
+			String [] splitt = new String [3];
 
-		if (rt.getCounter() > 3) {
+			String row = rt.getRowAsString(0);
+			splitt =  row.split(",");
+			if (splitt.length == 1){
+				splitt = row.split("\t");
+			}	
+			double a = Double.parseDouble(splitt[1]); // circularity values are in second column 
+
+
+			if ( a >= 3000) {
+				imp.setSlice(imp.getCurrentSlice()+1);
+				imp.setRoi(x, y, rwidth, rheight);
+				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
+			}
+			else {
+				startingThreshold++;
+				imp.setRoi(x, y, rwidth, rheight);
+				setThresh (startingThreshold, ip, imp, x, y, rwidth, rheight);
+			
+			}
+		}
+
+		else if (rt.getCounter() > 3) {
 //			if (test == 2) {
 //				int curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 //				imp.setSlice(curr+1);
@@ -156,7 +181,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 25, maxSize: flies not bigger than 150, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 25, 300, 0.6, 0.8);
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 300, 0.6, 0.8);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity
