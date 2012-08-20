@@ -51,7 +51,7 @@ public class Batch_Run implements PlugIn {
 
 				filename = myListSources[FileNumber].substring(0, myListSources[FileNumber].length()-4);
 
-				AVI_Reader ar = new AVI_Reader ();				// reading the AVI file
+				AVI_Reader_WD ar = new AVI_Reader_WD ();				// reading the AVI file
 				ar.run("");
 				ImagePlus myImPlus = ar.getImagePlus ();
 

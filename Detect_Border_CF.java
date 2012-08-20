@@ -22,7 +22,7 @@ public class Detect_Border_CF implements PlugInFilter {
 	public String result = "";
 
 	private float xwidth = (float)0.0;	// float width of image
-	private double max;
+	private double min;
 	public double [] params = new double [2];
 	public int goBack;
 
@@ -53,14 +53,14 @@ public class Detect_Border_CF implements PlugInFilter {
 		int x = width/4;		// upper left x coordinate
 		int y = 7*height/16;	// upper left y coordinate
 		
-			
+		ip.findEdges();	
 		imp.setRoi(x, y, rwidth, rheight);		// set ROI 1
 
 		imp.repaintWindow();
 
 		// set threshold
-		max = 140.0;	// threshold
-		setThresh(max, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
+		min = 30.0;	// threshold
+		setThresh(min, ip, imp, x, y, rwidth, rheight);	// applying setThresh method
 
 		drawBorder(ip,imp);	// applying drawBorder method
 
@@ -86,11 +86,11 @@ public class Detect_Border_CF implements PlugInFilter {
 	
 
 
-	private double setThresh (double max, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
+	private double setThresh (double min, ImageProcessor ip, ImagePlus imp, int x, int y, int rwidth, int rheight) {
 
 		// setting the threshold
-		double minThreshold = 0.0;
-		ip.setThreshold(minThreshold, max, 0);	
+		double maxThreshold = 255.0;
+		ip.setThreshold(min, maxThreshold, 0);	
 
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
@@ -100,16 +100,16 @@ public class Detect_Border_CF implements PlugInFilter {
 
 		// invoke method recursive with a higher threshold, if no particle is thresholded
 		if (rt.getCounter() < 2) {
-			max++;
+			min--;
 			imp.setRoi(x, y, rwidth, rheight);
-			max = setThresh (max, ip, imp, x, y, rwidth, rheight);
+			min = setThresh (min, ip, imp, x, y, rwidth, rheight);
 		}
 
 		// invoke method recursive with a lower threshold, if too many particles are thresholded
 		else if (rt.getCounter() > 6) {
-			max--;
+			min++;
 			imp.setRoi(x, y, rwidth, rheight);
-			max = setThresh(max, ip, imp, x, y, rwidth, rheight);
+			min = setThresh(min, ip, imp, x, y, rwidth, rheight);
 		}
 
 		else {
@@ -122,7 +122,7 @@ public class Detect_Border_CF implements PlugInFilter {
 				for (int rw = 0; rw <= rwidth; rw++) {
 					int beginX = x+rw;
 					int beginY = y+rh;
-						if (ip.getPixel(beginX, beginY) <= max) {
+						if (ip.getPixel(beginX, beginY) >= min) {
 							roiX.add(beginX);
 							roiY.add(beginY);
 						}
@@ -154,7 +154,7 @@ public class Detect_Border_CF implements PlugInFilter {
 			
 		}
 
-		return max;
+		return min;
 
 	}
 	
