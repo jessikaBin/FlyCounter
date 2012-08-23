@@ -8,9 +8,9 @@ var app = new Avidemux();
 
 	//** Filters **
 
-	app.video.addFilter("resamplefps","newfps=5000","use_linear=0");
-	app.video.addFilter("lumaonly");
-	app.video.addFilter("mpresize","w=720","h=408","algo=0");
+	app.video.addFilter("resamplefps","newfps=5000","use_linear=0"); //** Reducing from 20 fps to 5 fps **
+	app.video.addFilter("lumaonly");	//** changing to grayscale **
+	app.video.addFilter("mpresize","w=720","h=408","algo=0"); //** change frame size **
 
 	//** Video Codec conf **
 
