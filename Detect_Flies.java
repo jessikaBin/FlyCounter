@@ -17,6 +17,7 @@ public class Detect_Flies implements PlugInFilter {
 	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();
 
 
+
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
 		return DOES_ALL;
@@ -35,7 +36,8 @@ public class Detect_Flies implements PlugInFilter {
 			
 			imp.setSlice(i);
 			findFlies(ip, imp);
-			filterMaxima (ip);
+		//	filterMaximaWithDifference(ip);
+			filterMaximaWithWand (ip);
 		
 		}
 		
@@ -69,7 +71,7 @@ public class Detect_Flies implements PlugInFilter {
 
 	}
 	
-	private void filterMaxima (ImageProcessor ip) {
+	private void filterMaximaWithDifference (ImageProcessor ip) {
 	
 		int width = ip.getWidth();
 		int height = ip.getHeight();
@@ -130,6 +132,128 @@ public class Detect_Flies implements PlugInFilter {
 		double frame = (double)imp.getCurrentSlice();
 		countedFlies.put(frame, flies);
 		
+	}
+	
+	public void filterMaximaWithWand (ImageProcessor ip) {
+	
+		HashMap <ArrayList<Double>, Double> areaToCoordinates = new HashMap <ArrayList<Double>, Double> ();
+	
+		ResultsTable rt = Analyzer.getResultsTable();
+		//rt.reset();
+		rt = mf.getResultsTable ();
+	
+		String [] splitt = new String [3];
+		ArrayList <Double> xcoo = new ArrayList <Double> (); // array list for saving the x values
+		ArrayList <Double> ycoo = new ArrayList <Double> (); // array list for saving the y values
+
+		for (int i =0; i<=rt.getCounter()-1; i++){	
+			String row = rt.getRowAsString(i);
+			splitt =  row.split(",");
+			if (splitt.length == 1){
+				splitt = row.split("\t");
+			}	
+			double x = Double.parseDouble(splitt[1]); 
+			double y = Double.parseDouble(splitt[2]);
+			xcoo.add(x);
+			ycoo.add(y);	
+		}
+		
+		double flies = 0;
+		for (int j = 0; j<xcoo.size();j++){
+		
+			rt.reset();
+		
+			double x_max = xcoo.get(j);
+			double y_max = ycoo.get(j);
+			
+			double lower = 0;
+			double upper = 105;
+			int mode = 8;
+			
+			Wand w = new Wand(ip);
+			w.autoOutline((int)x_max, (int) y_max, lower, upper, mode);
+			
+			int [] x = w.xpoints;
+			int [] y = w.ypoints;
+			
+			rt.reset();
+			
+			int count = 0;
+			for (int k=0; k<x.length;k++){
+				
+				if (x[k] != 0 && y[k] != 0) {
+					count ++;
+				}
+			}
+			
+			int [] xPoints = new int [count];
+			int [] yPoints = new int [count];
+
+			for (int k=0; k<x.length;k++){
+				
+				if (x[k] != 0 && y[k] != 0) {
+					xPoints[k]=x[k];
+					yPoints[k]=y[k];
+				}
+			}
+			
+			int nPoints = xPoints.length;
+			int type = 2;
+		
+			Roi pr = new PolygonRoi(xPoints, yPoints, nPoints, type);
+			imp.setRoi(pr);
+			
+			ip.setThreshold(0, upper, 0);
+			
+			ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 0, Double.POSITIVE_INFINITY, 0, 1);
+			pa.analyze(imp);
+			
+			String [] splitt2 = new String [2];
+
+			String row = rt.getRowAsString(0);
+			splitt2 =  row.split(",");
+			if (splitt2.length == 1){
+				splitt2 = row.split("\t");
+			}	
+			double area = Double.parseDouble(splitt2[1]); // area values are in second column 
+			
+			if (area > 10) {
+				ip.drawDot ((int)x_max, (int)y_max);
+				flies ++;
+			}
+			
+			rt.reset();
+			
+			ArrayList <Double> coordinates = new ArrayList <Double>();
+			coordinates.add(x_max);
+			coordinates.add(y_max);
+
+			areaToCoordinates.put(coordinates,area);
+			
+	
+		}
+		
+		double frame = (double)imp.getCurrentSlice();
+		countedFlies.put(frame, flies);
+		
+		// rt.reset();
+		
+		// Set set = areaToCoordinates.entrySet(); 
+		// Iterator i = set.iterator(); 
+
+		// while (i.hasNext()) { 
+			// Map.Entry me = (Map.Entry)i.next(); 
+			// rt.incrementCounter();
+			
+        // //    rt.addValue("Coordinates", ((Double)me.getKey()).doubleValue());
+			// rt.addValue("Area", ((Double)me.getValue()).doubleValue());
+		// } 	
+		
+		// rt.show ("Results");
+		
+		// rt.reset();
+
+	
 	}
 	
 	public void outputCountedFlies () {
