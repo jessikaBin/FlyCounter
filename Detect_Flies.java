@@ -15,7 +15,7 @@ public class Detect_Flies implements PlugInFilter {
 	
 	private Maximum_Finder_Modified mf = new Maximum_Finder_Modified ();
 	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();
-	protected TreeMap <Double, ArrayList <Double>> fliesDifference = new TreeMap <Double, ArrayList <Double>> ();
+
 
 
 	public int setup(String arg, ImagePlus imp) {
@@ -37,7 +37,7 @@ public class Detect_Flies implements PlugInFilter {
 			imp.setSlice(i);
 			findFlies(ip, imp);
 			filterMaximaWithDifference(ip);
-			filterMaximaWithWand (ip);
+		//	filterMaximaWithWand (ip);
 		
 		}
 		
@@ -47,7 +47,7 @@ public class Detect_Flies implements PlugInFilter {
 
 	private void findFlies (ImageProcessor ip, ImagePlus imp) {
 	
-		double tolerance = 45;
+		double tolerance = 10;
 		double threshold = ImageProcessor.NO_THRESHOLD;
 		int outputType = 4; // output is a list of all maxima
 		boolean excludeOnEdges = true;
@@ -82,8 +82,6 @@ public class Detect_Flies implements PlugInFilter {
 		String [] splitt = new String [3];
 		ArrayList <Double> xcoo = new ArrayList <Double> (); // array list for saving the x values
 		ArrayList <Double> ycoo = new ArrayList <Double> (); // array list for saving the y values
-		
-		ArrayList <Double> fliesCoo = new ArrayList <Double> ();
 
 		for (int i =0; i<=rt.getCounter()-1; i++){	
 			String row = rt.getRowAsString(i);
@@ -103,41 +101,38 @@ public class Detect_Flies implements PlugInFilter {
 			double x_max = xcoo.get(j);
 			double y_max = ycoo.get(j);
 			
-			if (ip.getPixelValue((int)x_max, (int)y_max) < 100) {
+			double counter = 0;
 			
-				double counter = 0;
-				for (int hor = -1; hor<=1; hor++){
-					for (int ver =-1; ver <=1; ver++){
+			for (int hor = -1; hor<=1; hor++){
+				for (int ver =-1; ver <=1; ver++){
+				
+					int diff = 70;
+					int abs = 115;
 					
-						int diff = 100;
-			
-						if ((Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver-1))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor, (int)y_max+ver-1))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver-1))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver+1))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor, (int)y_max+ver+1))<diff) &&
-							(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver+1))<diff)) {
-			
-								counter++;
-						}
+					if ((ip.getPixelValue((int)x_max+hor, (int)y_max+ver) < abs) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver-1))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor, (int)y_max+ver-1))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver-1))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor+1, (int)y_max+ver+1))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor, (int)y_max+ver+1))<diff) &&
+						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver+1))<diff)) {
+		
+							counter++;
 					}
 				}
-				if (counter > 5) {
-					fliesCoo.add(x_max);
-					fliesCoo.add(y_max);
-				//	ip.drawDot ((int)x_max, (int)y_max);
-				//	flies++;
-				}
 			}
-		
+			
+			if (counter > 5) {
+				ip.drawDot ((int)x_max, (int)y_max);
+				flies++;
+			}
+				
 		}
 		
 		double frame = (double)imp.getCurrentSlice();
-		//countedFlies.put(frame, flies);
-		fliesDifference.put(frame, fliesCoo);
-		
+		countedFlies.put(frame, flies);
 		
 	}
 	
@@ -168,84 +163,88 @@ public class Detect_Flies implements PlugInFilter {
 		double flies = 0;
 		for (int j = 0; j<xcoo.size();j++){
 		
-			int s = imp.getCurrentSlice();
-			ArrayList <Double> coo = fliesDifference.get(s);
-			
-			for (int l = 0; l < coo.size()-1; l=l+2) {
+			rt.reset();
 		
-				rt.reset();
+			double x_max = xcoo.get(j);
+			double y_max = ycoo.get(j);
+			
+			double lower = 0;
+			double upper = 110;
+			int mode = 8;
+			
+			Wand w = new Wand(ip);
+			w.autoOutline((int)x_max, (int) y_max, lower, upper, mode);
+			
+			int [] x = w.xpoints;
+			int [] y = w.ypoints;
+			
+			rt.reset();
+			
+			int count = 0;
+			for (int k=0; k<x.length;k++){
 				
-				double x_max = xcoo.get(j);
-				double y_max = ycoo.get(j); 
-				
-				if (coo.get(l)==x_max && coo.get(l+1)==y_max) {
-					
-					double lower = 0;
-					double upper = 110;
-					int mode = 8;
-					
-					Wand w = new Wand(ip);
-					w.autoOutline((int)x_max, (int) y_max, lower, upper, mode);
-					
-					int [] x = w.xpoints;
-					int [] y = w.ypoints;
-					
-					rt.reset();
-					
-					int count = 0;
-					for (int k=0; k<x.length;k++){
-						
-						if (x[k] != 0 && y[k] != 0) {
-							count ++;
-						}
-					}
-					
-					int [] xPoints = new int [count];
-					int [] yPoints = new int [count];
-
-					for (int k=0; k<x.length;k++){
-						
-						if (x[k] != 0 && y[k] != 0) {
-							xPoints[k]=x[k];
-							yPoints[k]=y[k];
-						}
-					}
-					
-					int nPoints = xPoints.length;
-					int type = 2;
-				
-					Roi pr = new PolygonRoi(xPoints, yPoints, nPoints, type);
-					imp.setRoi(pr);
-					
-					ip.setThreshold(0, upper, 0);
-					
-					ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 0, Double.POSITIVE_INFINITY, 0, 1);
-					pa.analyze(imp);
-					
-					String [] splitt2 = new String [2];
-
-					String row = rt.getRowAsString(0);
-					splitt2 =  row.split(",");
-					if (splitt2.length == 1){
-						splitt2 = row.split("\t");
-					}	
-					double area = Double.parseDouble(splitt2[1]); // area values are in second column 
-					
-					if (area > 9) {
-						ip.drawDot ((int)x_max, (int)y_max);
-						flies ++;
-					}
-					
-					rt.reset();
-					
-					ArrayList <Double> coordinates = new ArrayList <Double>();
-					coordinates.add(x_max);
-					coordinates.add(y_max);
-
-					areaToCoordinates.put(coordinates,area);
-					
+				if (x[k] != 0 && y[k] != 0) {
+					count ++;
 				}
 			}
+			
+			int [] xPoints = new int [count];
+			int [] yPoints = new int [count];
+			
+
+
+			for (int k=0; k<x.length;k++){
+			try {
+				
+				if (x[k] != 0 && y[k] != 0) {
+					xPoints[k]=x[k];
+					yPoints[k]=y[k];
+				}
+				
+				}
+				    catch (IndexOutOfBoundsException ex )
+    {
+      System.out.println("Es ist folgendes Problem aufgetreten: " + ex.getMessage()
+          + "\nHier ist wobei es passiert ist:\n");
+      ex.printStackTrace();
+    }
+			}
+		
+			
+			int nPoints = xPoints.length;
+			int type = 2;
+		
+			Roi pr = new PolygonRoi(xPoints, yPoints, nPoints, type);
+			imp.setRoi(pr);
+			
+			ip.setThreshold(0, upper, 0);
+			
+			ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 0, Double.POSITIVE_INFINITY, 0, 1);
+			pa.analyze(imp);
+			
+			String [] splitt2 = new String [2];
+
+			String row = rt.getRowAsString(0);
+			splitt2 =  row.split(",");
+			if (splitt2.length == 1){
+				splitt2 = row.split("\t");
+			}	
+			double area = Double.parseDouble(splitt2[1]); // area values are in second column 
+			
+			if (area > 9) {
+				ip.drawDot ((int)x_max, (int)y_max);
+				flies ++;
+			}
+			
+			rt.reset();
+			
+			ArrayList <Double> coordinates = new ArrayList <Double>();
+			coordinates.add(x_max);
+			coordinates.add(y_max);
+
+			areaToCoordinates.put(coordinates,area);
+			
+	
 		}
 		
 		double frame = (double)imp.getCurrentSlice();
