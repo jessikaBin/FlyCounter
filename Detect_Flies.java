@@ -13,9 +13,8 @@ public class Detect_Flies implements PlugInFilter {
 	
 	ImagePlus imp;
 	
-	private Maximum_Finder_Modified mf = new Maximum_Finder_Modified ();
+	private Maximum_Finder_Modified mf = new Maximum_Finder_Modified (); // shortly modified version of the MaximumFinder
 	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();
-
 
 
 	public int setup(String arg, ImagePlus imp) {
@@ -25,9 +24,8 @@ public class Detect_Flies implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 
-		// get size of image
-		byte[] pixels = (byte[])ip.getPixels();
 		
+		byte[] pixels = (byte[])ip.getPixels(); // get size of image
 		int stackSize = imp.getStackSize() ;	// get number of frames 
 		
 		mf.setup("", imp);
@@ -45,16 +43,19 @@ public class Detect_Flies implements PlugInFilter {
 		
 	}
 
+	// method to find maxima (possible flies)
 	private void findFlies (ImageProcessor ip, ImagePlus imp) {
 	
-		double tolerance = 10;
+		double tolerance = 10; // noise tolerance (the higher the number, the less found maxima)
 		double threshold = ImageProcessor.NO_THRESHOLD;
 		int outputType = 4; // output is a list of all maxima
 		boolean excludeOnEdges = true;
 		boolean isEDM = false;
 		
+		// part from original run-method from MaximumFinder to invert picture (because of light background)
 		float[] cTable = ip.getCalibrationTable();
         ip = ip.duplicate();
+		
         if (cTable==null) {                 //invert image for finding minima of uncalibrated images
 			ip.invert();
         } 
@@ -66,9 +67,9 @@ public class Detect_Flies implements PlugInFilter {
             ip.setCalibrationTable(invertedCTable);
         }
 	
+		// invoking the findMaxima method of the MaximumFinder
 		mf.findMaxima(ip, tolerance, threshold, outputType, excludeOnEdges, isEDM);
-		//mf.run(ip);
-
+		
 	}
 	
 	private void filterMaximaWithDifference (ImageProcessor ip) {
@@ -76,6 +77,7 @@ public class Detect_Flies implements PlugInFilter {
 		int width = ip.getWidth();
 		int height = ip.getHeight();
 	
+		// get maxima found by MaximumFinder
 		ResultsTable rt = Analyzer.getResultsTable();
 		rt = mf.getResultsTable ();
 	
@@ -95,6 +97,8 @@ public class Detect_Flies implements PlugInFilter {
 			ycoo.add(y);	
 		}
 		
+		//check for each found maxima whether it is a fly
+		
 		double flies = 0;
 		for (int j = 0; j<xcoo.size();j++){
 		
@@ -102,12 +106,16 @@ public class Detect_Flies implements PlugInFilter {
 			double y_max = ycoo.get(j);
 			
 			double counter = 0;
+						
+			// check pixel values for found maxima and their 8 neighbor pixelss
 			
 			for (int hor = -1; hor<=1; hor++){
 				for (int ver =-1; ver <=1; ver++){
 				
-					int diff = 70;
-					int abs = 115;
+					int diff = 70; // maximum difference between pixel values 
+					int abs = 115; // cutoff for absolute pixel value
+					
+					// if pixelvalue of centerpixel is < abs and the value difference to the 8 neighbour pixels is < diff => possible fly
 					
 					if ((ip.getPixelValue((int)x_max+hor, (int)y_max+ver) < abs) &&
 						(Math.abs(ip.getPixelValue((int)x_max+hor, (int)y_max+ver)-ip.getPixelValue((int)x_max+hor-1, (int)y_max+ver))<diff) &&
@@ -124,11 +132,12 @@ public class Detect_Flies implements PlugInFilter {
 				}
 			}
 			
+			// if min. 6 neighboured pixels suggest a possible fly => fly
+			
 			if (counter > 5) {
 				ip.drawDot ((int)x_max, (int)y_max);
 				flies++;
-			}
-				
+			}			
 		}
 		
 		double frame = (double)imp.getCurrentSlice();
@@ -288,5 +297,7 @@ public class Detect_Flies implements PlugInFilter {
 		rt.show ("Results");
 		
 	}
-
 }
+
+
+
