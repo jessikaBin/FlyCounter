@@ -1,3 +1,4 @@
+
 import ij.plugin.*;
 import ij.*;
 import ij.process.*;
@@ -180,7 +181,7 @@ public class AVI_Reader_WD extends VirtualStack implements PlugIn {
     private int                lastFrame = 0;       //the last frame to read; 0 means 'read all'
     private boolean            convertToGray = true;       //whether to convert color video to grayscale
     private boolean            flipVertical = false;        //whether to flip image vertical
-    private boolean            isVirtual = false;           //whether to open as virtual stack
+    private boolean            isVirtual = true;           //whether to open as virtual stack
    //the input file
     private  RandomAccessFile  raFile;
     private  String            raFilePath;
@@ -303,6 +304,11 @@ public class AVI_Reader_WD extends VirtualStack implements PlugIn {
     public ImagePlus getImagePlus() {
         return imp;
     }
+	
+	public int getLastFrame () {
+	
+		return lastFrame;
+	}
 
     /** Create an ImageStack from an avi file with given path.
      * @param path              Directoy+filename of the avi file

@@ -14,7 +14,9 @@ public class Detect_Flies implements PlugInFilter {
 	ImagePlus imp;
 	
 	private Maximum_Finder_Modified mf = new Maximum_Finder_Modified (); // shortly modified version of the MaximumFinder
-	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();
+	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();	
+	protected TreeMap <Double, ArrayList<Double>> flyCoordinates = new TreeMap <Double, ArrayList <Double>> ();
+
 
 
 	public int setup(String arg, ImagePlus imp) {
@@ -46,7 +48,7 @@ public class Detect_Flies implements PlugInFilter {
 	// method to find maxima (possible flies)
 	private void findFlies (ImageProcessor ip, ImagePlus imp) {
 	
-		double tolerance = 20; // noise tolerance (the higher the number, the less found maxima)
+		double tolerance = 17; // noise tolerance (the higher the number, the less found maxima)
 		double threshold = ImageProcessor.NO_THRESHOLD;
 		int outputType = 4; // output is a list of all maxima
 		boolean excludeOnEdges = true;
@@ -97,6 +99,7 @@ public class Detect_Flies implements PlugInFilter {
 			ycoo.add(y);	
 		}
 		
+		ArrayList <Double> coords = new ArrayList <Double> ();
 		//check for each found maxima whether it is a fly
 		
 		double flies = 0;
@@ -138,9 +141,11 @@ public class Detect_Flies implements PlugInFilter {
 				for (int hor = -1; hor<=1; hor++){
 					for (int ver =-1; ver <=1; ver++){
 						ip.drawDot ((int)x_max+hor, (int)y_max+ver);
-						
+					
 					}
 				}
+				coords.add(x_max);
+				coords.add(y_max);
 				
 			//	ip.drawDot ((int)x_max, (int)y_max);
 				flies++;
@@ -149,6 +154,13 @@ public class Detect_Flies implements PlugInFilter {
 		
 		double frame = (double)imp.getCurrentSlice();
 		countedFlies.put(frame, flies);
+		flyCoordinates.put(frame, coords);
+		
+	}
+	
+	public TreeMap <Double, ArrayList <Double>> getFlyCoordinates () {
+	
+		return flyCoordinates;
 		
 	}
 	

@@ -66,12 +66,12 @@ public class Batch_Run implements PlugIn {
 				ImagePlus imp2 = bs.getImp();
 				ImageProcessor ip2 = imp2.getProcessor();
 
-				try {
-					outputFile (myDir2, imp2);				// write the output .xls-file
-				}
-				catch (IOException e) {
-					System.err.println( "Problem with writing the file" );
-				}
+			//	try {
+			//		outputFile (myDir2, imp2);				// write the output .xls-file
+			//	}
+			//	catch (IOException e) {
+			//		System.err.println( "Problem with writing the file" );
+			//	}
 				
 
 				aw.setup ("",imp2);						// write the output .avi-file
