@@ -146,7 +146,7 @@ public class Detect_Border_CF implements PlugInFilter {
 			params = cf.getParams();
 			result = cf.getResultString();
 			
-			if (params[1] > 0.03 || params[1] < -0.03) {
+			if (params[1] > 0.08 || params[1] < -0.08) {
 				imp.setSlice(imp.getCurrentSlice()-1);
 				run(ip);
 			

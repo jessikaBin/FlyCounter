@@ -74,21 +74,21 @@ public class Border_Substack implements PlugInFilter {
 
 			findFirstFlies (ip, imp);	// applying findFirstFlies method
 			
-			if ( flyCount != 0) {	// flies are found in current slice
-				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
-				imp.setSlice(curr-2);
+		//	if ( flyCount != 0) {	// flies are found in current slice
+		//		curr = imp.getCurrentSlice();	// starting frame is changed to current slice
+		//		imp.setSlice(curr-2);
 
-				db.run(ip);
-				result = db.getString ();
-				break;	
-			}
+		//		db.run(ip);
+		//		result = db.getString ();
+		//		break;	
+		//	}
 
 		}
 
 		imp.killRoi();
 		substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
-		detectFlies (ip2, imp2);
+	//	detectFlies (ip2, imp2);
 	//	imp.close();
 	//	imp2.close();
 
