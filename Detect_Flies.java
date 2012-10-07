@@ -8,14 +8,17 @@ import ij.plugin.filter.*;
 import ij.plugin.SubstackMaker;
 
 import java.util.*; 
+import java.io.*;
+import java.util.Map.Entry;
+
 
 public class Detect_Flies implements PlugInFilter {
 	
 	ImagePlus imp;
 	
 	private Maximum_Finder_Modified mf = new Maximum_Finder_Modified (); // shortly modified version of the MaximumFinder
-	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();	
-	protected TreeMap <Double, ArrayList<Double>> flyCoordinates = new TreeMap <Double, ArrayList <Double>> ();
+	protected TreeMap <Double, Double> countedFlies = new TreeMap <Double, Double> ();
+	protected TreeMap <Double, ArrayList<Double>> flySize = new TreeMap <Double, ArrayList<Double>> ();
 
 
 
@@ -42,13 +45,13 @@ public class Detect_Flies implements PlugInFilter {
 		}
 		
 		outputCountedFlies();
-		
+				
 	}
 
 	// method to find maxima (possible flies)
 	private void findFlies (ImageProcessor ip, ImagePlus imp) {
 	
-		double tolerance = 17; // noise tolerance (the higher the number, the less found maxima)
+		double tolerance = 15; // noise tolerance (the higher the number, the less found maxima)
 		double threshold = ImageProcessor.NO_THRESHOLD;
 		int outputType = 4; // output is a list of all maxima
 		boolean excludeOnEdges = true;
@@ -99,7 +102,9 @@ public class Detect_Flies implements PlugInFilter {
 			ycoo.add(y);	
 		}
 		
-		ArrayList <Double> coords = new ArrayList <Double> ();
+		
+		ArrayList <Double> flyAreas = new ArrayList <Double> ();
+		
 		//check for each found maxima whether it is a fly
 		
 		double flies = 0;
@@ -116,7 +121,7 @@ public class Detect_Flies implements PlugInFilter {
 				for (int ver =-1; ver <=1; ver++){
 				
 					int diff = 70; // maximum difference between pixel values 
-					int abs = 105; // cutoff for absolute pixel value
+					int abs = 115; // cutoff for absolute pixel value
 					
 					// if pixelvalue of centerpixel is < abs and the value difference to the 8 neighbour pixels is < diff => possible fly
 					
@@ -144,24 +149,119 @@ public class Detect_Flies implements PlugInFilter {
 					
 					}
 				}
-				coords.add(x_max);
-				coords.add(y_max);
-				
-			//	ip.drawDot ((int)x_max, (int)y_max);
+				double area = getFlySizes (x_max, y_max, ip, rt);
+				flyAreas.add(area);
 				flies++;
 			}			
 		}
 		
 		double frame = (double)imp.getCurrentSlice();
 		countedFlies.put(frame, flies);
-		flyCoordinates.put(frame, coords);
+		flySize.put(frame, flyAreas);
+		
+		try {
+			output(imp);
+		} 	catch (IOException e ) {
+				System.out.println("Es ist folgendes Output Problem aufgetreten: " + e.getMessage()
+				+ "\nHier ist wobei es passiert ist:\n");
+				e.printStackTrace();
+			}
 		
 	}
 	
-	public TreeMap <Double, ArrayList <Double>> getFlyCoordinates () {
+	public double getFlySizes (double x_max, double y_max, ImageProcessor ip, ResultsTable rt) {
 	
-		return flyCoordinates;
+		double lower = 0;
+		double upper = 110;
+		int mode = 8;
 		
+		Wand w = new Wand(ip);
+		w.autoOutline((int)x_max, (int) y_max, lower, upper, mode);
+		
+		int [] x = w.xpoints;
+		int [] y = w.ypoints;
+		
+		rt.reset();
+		
+		int count = 0;
+		for (int k=0; k<x.length;k++){
+			
+			if (x[k] != 0 && y[k] != 0) {
+				count ++;
+			}
+		}
+		
+		int [] xPoints = new int [count];
+		int [] yPoints = new int [count];
+		
+
+
+		for (int k=0; k<x.length;k++){
+			try {
+				
+				if (x[k] != 0 && y[k] != 0) {
+					xPoints[k]=x[k];
+					yPoints[k]=y[k];
+				}
+				
+			}
+			catch (IndexOutOfBoundsException ex ) {
+				System.out.println("Es ist folgendes Problem aufgetreten: " + ex.getMessage()
+				+ "\nHier ist wobei es passiert ist:\n");
+				ex.printStackTrace();
+			}
+		}
+	
+		
+		int nPoints = xPoints.length;
+		int type = 2;
+	
+		Roi pr = new PolygonRoi(xPoints, yPoints, nPoints, type);
+		imp.setRoi(pr);
+		
+		ip.setThreshold(0, upper, 0);
+		
+		ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 0, Double.POSITIVE_INFINITY, 0, 1);
+		pa.analyze(imp);
+		
+		String [] splitt2 = new String [2];
+
+		String row = rt.getRowAsString(0);
+		splitt2 =  row.split(",");
+		if (splitt2.length == 1){
+			splitt2 = row.split("\t");
+		}	
+		double area = Double.parseDouble(splitt2[1]); // area values are in second column 
+		rt.reset();
+		return area;
+	}
+	
+	public void output(ImagePlus imp) throws IOException {
+	
+		String title = imp.getTitle();
+
+		File file = new File("C:\\Users\\Jessi\\Desktop\\v\\" + "6577_15_70_115" + ".txt");
+		java.io.Writer output = new BufferedWriter(new FileWriter(file));
+
+		
+		Set set = flySize.entrySet();
+		Iterator i = set.iterator();
+
+		output.write("Slice" + "\t" + "Area" + "\n");
+
+		for (Entry<Double, ArrayList<Double>> entry : flySize.entrySet()){ 
+		//while (i.hasNext()) {
+			//Map.Entry me = (Map.Entry) i.next();
+			double slice = ((Double)entry.getKey()).doubleValue();
+			for (int h=0; h<entry.getValue().size();h++){
+				double size = ((Double)entry.getValue().get(h)).doubleValue();
+				output.write(slice + "\t"
+					+ size + "\n");
+			}
+		}
+
+		output.close();
+	
 	}
 	
 	public void filterMaximaWithWand (ImageProcessor ip) {
