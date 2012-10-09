@@ -74,19 +74,19 @@ public class Border_Substack implements PlugInFilter {
 
 			findFirstFlies (ip, imp);	// applying findFirstFlies method
 			
-		//	if ( flyCount != 0) {	// flies are found in current slice
-		//		curr = imp.getCurrentSlice();	// starting frame is changed to current slice
-		//		imp.setSlice(curr-2);
+			if ( flyCount != 0) {	// flies are found in current slice
+				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
+				imp.setSlice(curr-2);
 
-		//		db.run(ip);
-		//		result = db.getString ();
-		//		break;	
-		//	}
+				db.run(ip);
+				result = db.getString ();
+				break;	
+			}
 
 		}
 
 		imp.killRoi();
-		substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
+	//	substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
 	//	detectFlies (ip2, imp2);
 	//	imp.close();
@@ -180,8 +180,8 @@ public class Border_Substack implements PlugInFilter {
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
 
-		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 25, maxSize: flies not bigger than 150, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 300, 0.6, 0.8);
+		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 80, maxSize: flies not bigger than 450, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 450, 0.6, 0.8);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity

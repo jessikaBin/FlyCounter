@@ -15,6 +15,7 @@ public class Batch_Run implements PlugIn {
 
 	private Border_Substack bs = new Border_Substack ();
 	private AVI_Writer aw = new AVI_Writer ();	
+	private Fly_Movement fm = new Fly_Movement ();
 
 	protected static String filename = "";
 	protected static String myDir1 = "";	// Source Directory
@@ -22,6 +23,12 @@ public class Batch_Run implements PlugIn {
 
 
 	protected static int flyThreshold = thresholdDialog ();	// Threshold for Counting Flies
+	protected boolean [] res = new boolean [2];
+	
+//	protected static boolean mov = getMovement ();
+//	protected static boolean det = getDetection ();
+
+
 
 	public void run(String arg) { 
 		
@@ -63,8 +70,11 @@ public class Batch_Run implements PlugIn {
 				bs.setup("", myImPlus);						// run Border_Substack class
 				bs.run (myIp);
 
-				ImagePlus imp2 = bs.getImp();
-				ImageProcessor ip2 = imp2.getProcessor();
+			//	ImagePlus imp2 = bs.getImp();
+			//	ImageProcessor ip2 = imp2.getProcessor();
+				
+				fm.setup("",myImPlus);
+				fm.run(myIp);
 
 			//	try {
 			//		outputFile (myDir2, imp2);				// write the output .xls-file
@@ -74,10 +84,10 @@ public class Batch_Run implements PlugIn {
 			//	}
 				
 
-				aw.setup ("",imp2);						// write the output .avi-file
-				aw.run(ip2);
+			//	aw.setup ("",imp2);						// write the output .avi-file
+			//	aw.run(ip2);
 
-				imp2.close();
+			//	imp2.close();
 				myImPlus.close();						
 			}
 						
@@ -97,12 +107,50 @@ public class Batch_Run implements PlugIn {
 
 	      	gd.showDialog();
 	      	if (gd.wasCanceled()) {
-			System.err.println( "No threshold was selected" );
-		}
+				System.err.println( "No threshold was selected" );
+			}
 	      	threshold = (int)gd.getNextNumber();
      	
 		return threshold;
 	}
+	
+	// public static boolean[] inputDialog () {
+	
+		// boolean movement;
+		// boolean detection;
+	
+		// GenericDialog gdIn = new GenericDialog("Choose Results");
+	
+		// gdIn.addCheckbox("Fly Movement", false);
+		// gdIn.addCheckbox("Fly Detection", false);
+		
+		// gdIn.showDialog();
+	    // if (gdIn.wasCanceled()) {
+			// System.err.println( "No results are chosen" );
+		// }
+		// movement = gdIn.getNextBoolean();
+		// detection = gdIn.getNextBoolean();
+		
+		// res[0]=movement;
+		// res[1]=detection;
+	    
+		// return res;
+	
+	// }
+	
+	// public boolean getMovement (){
+	
+		// boolean movement = res[0];
+		// return movement;
+	
+	// }
+	
+	// public boolean getDetection (){
+	
+		// boolean detection = res[1];
+		// return detection;
+	
+	// }
 
 
 	// Method for Output a .xls-file for the results

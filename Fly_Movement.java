@@ -27,7 +27,7 @@ public class Fly_Movement implements PlugInFilter {
 	public TreeMap <Integer, Double> movementRatio = new TreeMap <Integer, Double> ();
 	public TreeMap <Integer, ArrayList <Double>> numbersforFrame = new TreeMap <Integer, ArrayList <Double>> ();
 	
-	public ArrayList <ImageProcessor> slices = new ArrayList <ImageProcessor> ();
+	//public ArrayList <ImageProcessor> slices = new ArrayList <ImageProcessor> ();
 	
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
@@ -87,9 +87,9 @@ public class Fly_Movement implements PlugInFilter {
 			ImagePlus impMo = icMove.run("Difference create", imp1, imp2);
 			ImageProcessor ipMo = impMo.getProcessor();
 			
-			ImagePlus impMoIn = impMo;
-			ImageProcessor ipMoIn = impMoIn.getProcessor();
-			ipMoIn.invert();
+		//	ImagePlus impMoIn = impMo;
+		//	ImageProcessor ipMoIn = impMoIn.getProcessor();
+		//	ipMoIn.invert();
 			
 			ipMo.setThreshold(0, 26, 0);
 			
@@ -145,6 +145,7 @@ public class Fly_Movement implements PlugInFilter {
 			
 			double ratio;
 			double denominator;
+			double numerator = moving/2;
 			if (moving == 0.0) {
 				ratio = 0.0;
 				denominator = staying;
@@ -157,20 +158,21 @@ public class Fly_Movement implements PlugInFilter {
 				ratio = (double)Math.round(ratio*100)/100;
 			}
 			
-			ImagePlus[] im = new ImagePlus[2];
-			im[0] = impMoIn;
-			im[1] = impSt;
-			RGBStackMerge m = new RGBStackMerge();
-			ImagePlus impChannel = m.mergeChannels(im, true);
-			ImageProcessor ipChannel = impChannel.getProcessor();
+			//ImagePlus[] im = new ImagePlus[2];
+			//im[0] = impMoIn;
+			//im[1] = impSt;
+			//RGBStackMerge m = new RGBStackMerge();
+			//ImagePlus impChannel = m.mergeChannels(im, true);
+			//ImageProcessor ipChannel = impChannel.getProcessor();
 			
-			slices.add (ipChannel);			
+			//slices.add (ipChannel);			
 			
 			ArrayList <Double> numbers = new ArrayList <Double> ();
 			
 			numbers.add(moving);
 			numbers.add(staying);
 			numbers.add(denominator);
+			numbers.add(numerator);
 			
 			movementRatio.put(i, ratio);
 			numbersforFrame.put(i, numbers);
@@ -180,36 +182,36 @@ public class Fly_Movement implements PlugInFilter {
 		
 	}
 	
-	public void createChannelVideo () {
+	// public void createChannelVideo () {
 	
-		ImageStack is = new ImageStack();
+		// ImageStack is = new ImageStack();
 		
-		for (int i=0; i<slices.size();i++){
-			is.addSlice(slices.get(i));
-		}
+		// for (int i=0; i<slices.size();i++){
+			// is.addSlice(slices.get(i));
+		// }
 		
 		
-				//		aw.setup("", imp2); // write the output .avi-file
-		//		aw.run(ip2);
+				// //		aw.setup("", imp2); // write the output .avi-file
+		// //		aw.run(ip2);
 	
 	
-	}
+	// }
 	
 	public void outputNumbers (ImagePlus imp) throws IOException {
 	
 		String title = imp.getTitle();
 
-		File file = new File("C:\\Users\\Jessi\\Desktop\\" + title.substring(0, title.length() - 2) + "_numbers.txt");
+		File file = new File("C:\\Users\\binderj\\Desktop\\" + title.substring(0, title.length() - 2) + "_numbers.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 		
 		Set set = numbersforFrame.entrySet();
 		Iterator i = set.iterator();
 
-		output.write("Frame" + "\t" + "Moving" + "\t" + "Staying"  + "\t" + "Denominator" + "\n");
+		output.write("Frame" + "\t" + "Moving" + "\t" + "Staying"  + "\t" + "Denominator" + "\t" + "Numerator" + "\n");
 
 		for (Entry<Integer, ArrayList<Double>> entry : numbersforFrame.entrySet()){ 
 			output.write(((Integer)entry.getKey()).intValue() + "\t" + ((Double)entry.getValue().get(0)).doubleValue() + "\t" + 
-			((Double)entry.getValue().get(1)).doubleValue()+ "\t" + ((Double)entry.getValue().get(2)).doubleValue() + "\n");
+			((Double)entry.getValue().get(1)).doubleValue()+ "\t" + ((Double)entry.getValue().get(2)).doubleValue() + "\t" + ((Double)entry.getValue().get(3)).doubleValue() + "\n");
 		}
 
 		output.close();
@@ -220,7 +222,7 @@ public class Fly_Movement implements PlugInFilter {
 	
 		String title = imp.getTitle();
 
-		File file = new File("C:\\Users\\Jessi\\Desktop\\" + title.substring(0, title.length() - 2) + "_ratio.txt");
+		File file = new File("C:\\Users\\binderj\\Desktop\\" + title.substring(0, title.length() - 2) + "_ratio.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 		
 		Set set = movementRatio.entrySet();
