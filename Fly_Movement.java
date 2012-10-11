@@ -51,7 +51,7 @@ public class Fly_Movement implements PlugInFilter {
 	
 		ResultsTable rt = Analyzer.getResultsTable();
 	
-		for (int i = 1; i <= imp.getStackSize()-1; i++) {
+	//	for (int i = 1; i <= imp.getStackSize()-1; i++) {
 		
 			ImagePlus imp1;
 			ImageStack is1 = new ImageStack();
@@ -177,7 +177,7 @@ public class Fly_Movement implements PlugInFilter {
 			movementRatio.put(i, ratio);
 			numbersforFrame.put(i, numbers);
 		
-		}
+	//	}
 
 		
 	}

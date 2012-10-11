@@ -22,6 +22,8 @@ public class Border_Substack implements PlugInFilter {
 	
 //	private Detect_Border db = new Detect_Border (); 
 	private Detect_Border_CF db = new Detect_Border_CF (); 
+	private Detect_Flies df = new Detect_Flies ();
+	private Fly_Movement fm = new Fly_Movement ();
 	
 	public String result = "";
 
@@ -31,8 +33,9 @@ public class Border_Substack implements PlugInFilter {
 	private double startingThreshold = 140.0;					// starting threshold for border detection
 	private double maxThreshold = Batch_Run.flyThreshold;		// threshold for detecting the flies
 
-	protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
-	protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
+	//protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
+	//protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
+	protected TreeMap <Integer, Double> preferenceIndex = new TreeMap <Integer, Double> ();
 	
 
 	public int setup(String arg, ImagePlus imp) {
@@ -44,6 +47,8 @@ public class Border_Substack implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 
 		db.setup("",imp);
+		df.setup("",imp);
+		fm.setup("",imp2);
 
 		// get size of image
 		byte[] pixels = (byte[])ip.getPixels();
@@ -88,7 +93,7 @@ public class Border_Substack implements PlugInFilter {
 		imp.killRoi();
 	//	substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
-	//	detectFlies (ip2, imp2);
+		detectFlies (ip, imp);
 	//	imp.close();
 	//	imp2.close();
 
@@ -249,20 +254,28 @@ public class Border_Substack implements PlugInFilter {
 
 			// set threshold
 
-			countFlies(maxThreshold, ip2, imp2, i, summaryWater, summarySugar);	// applying setThresh method
+			countFlies(maxThreshold, ip2, imp2, i, preferenceIndex);	// applying setThresh method
+			
+
 
 		}
 
 	}
 
-	public ArrayList <TreeMap <Integer, Integer>> getMaps () {
+	// public ArrayList <TreeMap <Integer, Integer>> getMaps () {
 
-		ArrayList <TreeMap <Integer, Integer>> areas = new ArrayList <TreeMap <Integer, Integer>> ();
-		areas.add(0,summaryWater);
-		areas.add(1,summarySugar);
+		// ArrayList <TreeMap <Integer, Integer>> areas = new ArrayList <TreeMap <Integer, Integer>> ();
+		// areas.add(0,summaryWater);
+		// areas.add(1,summarySugar);
 
-		return areas;
+		// return areas;
 
+	// }
+	
+	public TreeMap <Integer, Double> getPrefInd () {
+	
+		return preferenceIndex;
+		
 	}
 
 	public ImagePlus getImp () {
@@ -270,7 +283,7 @@ public class Border_Substack implements PlugInFilter {
 		return imp2;
 	}
 
-	private void countFlies (double maxThreshold, ImageProcessor ip2, ImagePlus imp2, int i, TreeMap <Integer, Integer> summaryWater, TreeMap <Integer, Integer> summarySugar) {
+	private void countFlies (double maxThreshold, ImageProcessor ip2, ImagePlus imp2, int i, TreeMap <Integer, Double> preferenceIndex) {
 
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
@@ -285,18 +298,24 @@ public class Border_Substack implements PlugInFilter {
 
 		imp2.setRoi(prWater);		// set ROI
 
-		double minThreshold = 0.0;
-		ip2.setThreshold(minThreshold, maxThreshold, 0);	
+		// double minThreshold = 0.0;
+		// ip2.setThreshold(minThreshold, maxThreshold, 0);	
 
-		// define results table
-		ResultsTable rt = Analyzer.getResultsTable();
+		// // define results table
+		// ResultsTable rt = Analyzer.getResultsTable();
 
-		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
+		// // measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
+		// rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
+		
+		df.run(ip2);
 
-		int particles = rt.getCounter();
-		summaryWater.put(i, particles);
-
+		double wat = df.getCountedFlies();
+		//summaryWater.put(i, wat);
+		
+		if (i <= imp2.getStackSize()-1){
+			fm.run(ip2);
+		}
+			
 		imp2.killRoi();
 
 		float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
@@ -307,10 +326,19 @@ public class Border_Substack implements PlugInFilter {
 		imp2.setRoi(prSugar);		// set ROI
 
 		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
+	//	rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
 
-		particles = rt.getCounter();
-		summarySugar.put(i, particles);
+		df.run(ip2);
+		double sug = df.getCountedFlies();
+		//summarySugar.put(i, sug);
+		
+		if (i <= imp.getStackSize()-1){
+			fm.run(ip2);
+		}
+		
+		double prefInd = (sug - wat)/(sug + wat);
+		
+		preferenceIndex.put(i, prefInd);
 
 	}
 	

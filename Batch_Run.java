@@ -15,7 +15,7 @@ public class Batch_Run implements PlugIn {
 
 	private Border_Substack bs = new Border_Substack ();
 	private AVI_Writer aw = new AVI_Writer ();	
-	private Fly_Movement fm = new Fly_Movement ();
+
 
 	protected static String filename = "";
 	protected static String myDir1 = "";	// Source Directory
@@ -73,15 +73,14 @@ public class Batch_Run implements PlugIn {
 			//	ImagePlus imp2 = bs.getImp();
 			//	ImageProcessor ip2 = imp2.getProcessor();
 				
-				fm.setup("",myImPlus);
-				fm.run(myIp);
 
-			//	try {
-			//		outputFile (myDir2, imp2);				// write the output .xls-file
-			//	}
-			//	catch (IOException e) {
-			//		System.err.println( "Problem with writing the file" );
-			//	}
+
+				try {
+					outputFile (myDir2, myImPlus);				// write the output .xls-file
+				}
+				catch (IOException e) {
+					System.err.println( "Problem with writing the file" );
+				}
 				
 
 			//	aw.setup ("",imp2);						// write the output .avi-file
@@ -161,18 +160,20 @@ public class Batch_Run implements PlugIn {
 		File file = new File(MyDir2 + title.substring(0,title.length()-2) + "_" + flyThreshold + ".xls");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 
-		ArrayList <TreeMap <Integer, Integer>> summaries = bs.getMaps ();
-		TreeMap <Integer, Integer> summaryWater = summaries.get(0);
-		TreeMap <Integer, Integer> summarySugar = summaries.get(1);
+		// ArrayList <TreeMap <Integer, Integer>> summaries = bs.getMaps ();
+		// TreeMap <Integer, Integer> summaryWater = summaries.get(0);
+		// TreeMap <Integer, Integer> summarySugar = summaries.get(1);
+		
+		TreeMap <Integer, Double> prefInd = bs.getPrefInd();
 
-		Set set = summaryWater.entrySet(); 
+		Set set = prefInd.entrySet(); 
 		Iterator i = set.iterator(); 
 
-		output.write("Slice" + "\t" + "Count Water " + "\t" + "Count Sugar" + "\t" + "Total Count" + "\n");
+		output.write("Slice" + "\t" + "Preference Index" +  "\n");
 
 		while (i.hasNext()) { 
 			Map.Entry me = (Map.Entry)i.next(); 
-			output.write(me.getKey() + "\t" + me.getValue() + "\t" + summarySugar.get(me.getKey()) + "\t" + (((Integer)me.getValue()).intValue()+summarySugar.get(me.getKey())) + "\n"); 
+			output.write(me.getKey() + "\t" + ((Double)me.getValue()).doubleValue() + "\n"); 
 		} 
 		
 	//	output.write(bs.getString());
