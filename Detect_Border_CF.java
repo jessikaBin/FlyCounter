@@ -16,8 +16,8 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	ImagePlus imp;
 
-	public float [] xPoints = new float [4];
-	public float [] yPoints = new float [4]; 
+	public static float [] xPoints = new float [4];
+	public static float [] yPoints = new float [4]; 
 	
 	public String result = "";
 
@@ -181,14 +181,14 @@ public class Detect_Border_CF implements PlugInFilter {
 		
 	}
 	
-	public float [] getXPoints () {
+	public static float [] getXPoints () {
 
 		return xPoints;	
 	
 	}
 
 
-	public float [] getYPoints () {
+	public static float [] getYPoints () {
 
 		return yPoints;	
 	

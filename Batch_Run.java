@@ -22,11 +22,11 @@ public class Batch_Run implements PlugIn {
 	protected static String myDir2 = "";	// Saving Directory
 
 
-	protected static int flyThreshold = thresholdDialog ();	// Threshold for Counting Flies
-	protected boolean [] res = new boolean [2];
+//	protected static int flyThreshold = thresholdDialog ();	// Threshold for Counting Flies
+	protected static boolean [] res = inputDialog ();
 	
-//	protected static boolean mov = getMovement ();
-//	protected static boolean det = getDetection ();
+	protected static boolean mov = getMovement ();
+	protected static boolean det = getDetection ();
 
 
 
@@ -74,12 +74,13 @@ public class Batch_Run implements PlugIn {
 			//	ImageProcessor ip2 = imp2.getProcessor();
 				
 
-
-				try {
-					outputFile (myDir2, myImPlus);				// write the output .xls-file
-				}
-				catch (IOException e) {
-					System.err.println( "Problem with writing the file" );
+				if (det == true) {
+					try {
+						outputFile (myDir2, myImPlus);				// write the output .xls-file
+					}
+					catch (IOException e) {
+						System.err.println( "Problem with writing the file" );
+					}
 				}
 				
 
@@ -97,59 +98,61 @@ public class Batch_Run implements PlugIn {
 
 
 	// Method to set the Threshold in a Dialog
-	public static int thresholdDialog () {
+	// public static int thresholdDialog () {
 
-    		int threshold = 100;
+    		// int threshold = 100;
 	
-	      	GenericDialog gd = new GenericDialog("Set Threshold");
-	      	gd.addNumericField("Threshold: ", threshold, 0);
+	      	// GenericDialog gd = new GenericDialog("Set Threshold");
+	      	// gd.addNumericField("Threshold: ", threshold, 0);
 
-	      	gd.showDialog();
-	      	if (gd.wasCanceled()) {
-				System.err.println( "No threshold was selected" );
-			}
-	      	threshold = (int)gd.getNextNumber();
+	      	// gd.showDialog();
+	      	// if (gd.wasCanceled()) {
+				// System.err.println( "No threshold was selected" );
+			// }
+	      	// threshold = (int)gd.getNextNumber();
      	
-		return threshold;
+		// return threshold;
+	// }
+	
+	public static boolean[] inputDialog () {
+	
+		boolean movement;
+		boolean detection;
+		
+		boolean [] input = new boolean [2];
+	
+		GenericDialog gdIn = new GenericDialog("Choose Results");
+	
+		gdIn.addCheckbox("Fly Movement", false);
+		gdIn.addCheckbox("Fly Detection", false);
+		
+		gdIn.showDialog();
+	    if (gdIn.wasCanceled()) {
+			System.err.println( "No results are chosen" );
+		}
+		movement = gdIn.getNextBoolean();
+		detection = gdIn.getNextBoolean();
+		
+		input[0]=movement;
+		input[1]=detection;
+	    
+		return input;
+	
 	}
 	
-	// public static boolean[] inputDialog () {
+	public static boolean getMovement (){
 	
-		// boolean movement;
-		// boolean detection;
+		boolean movement = res[0];
+		return movement;
 	
-		// GenericDialog gdIn = new GenericDialog("Choose Results");
+	}
 	
-		// gdIn.addCheckbox("Fly Movement", false);
-		// gdIn.addCheckbox("Fly Detection", false);
-		
-		// gdIn.showDialog();
-	    // if (gdIn.wasCanceled()) {
-			// System.err.println( "No results are chosen" );
-		// }
-		// movement = gdIn.getNextBoolean();
-		// detection = gdIn.getNextBoolean();
-		
-		// res[0]=movement;
-		// res[1]=detection;
-	    
-		// return res;
+	public static boolean getDetection (){
 	
-	// }
+		boolean detection = res[1];
+		return detection;
 	
-	// public boolean getMovement (){
-	
-		// boolean movement = res[0];
-		// return movement;
-	
-	// }
-	
-	// public boolean getDetection (){
-	
-		// boolean detection = res[1];
-		// return detection;
-	
-	// }
+	}
 
 
 	// Method for Output a .xls-file for the results
@@ -157,7 +160,7 @@ public class Batch_Run implements PlugIn {
 
 		String title = imp2.getTitle();
 
-		File file = new File(MyDir2 + title.substring(0,title.length()-2) + "_" + flyThreshold + ".xls");
+		File file = new File(MyDir2 + title.substring(0,title.length()-2) + "_preferenceIndex"  + ".txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 
 		// ArrayList <TreeMap <Integer, Integer>> summaries = bs.getMaps ();

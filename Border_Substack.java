@@ -9,14 +9,17 @@ import ij.plugin.SubstackMaker;
 
 import java.io.*;
 import java.util.*; 
+import java.lang.Math;
 
 
 public class Border_Substack implements PlugInFilter {
 
-	ImagePlus imp;
+	static ImagePlus imp;
 	ImagePlus imp2;
 	ImageProcessor ip2;
 	ImageWindow iw;
+	static Roi prSugar;
+	static Roi prWater;
 
 	private int flyCount = 0;   // count for testing whether flies are in frame or not  
 	
@@ -26,16 +29,23 @@ public class Border_Substack implements PlugInFilter {
 	private Fly_Movement fm = new Fly_Movement ();
 	
 	public String result = "";
-
+	
 	private int test = 0;
 	private double numberSlides = 0;
 
 	private double startingThreshold = 140.0;					// starting threshold for border detection
-	private double maxThreshold = Batch_Run.flyThreshold;		// threshold for detecting the flies
+//	private double maxThreshold = Batch_Run.flyThreshold;		// threshold for detecting the flies
+	private boolean mov = Batch_Run.mov;
+	private boolean det = Batch_Run.det;
 
 	//protected TreeMap <Integer, Integer> summaryWater = new TreeMap <Integer, Integer> ();
 	//protected TreeMap <Integer, Integer> summarySugar = new TreeMap <Integer, Integer> ();
 	protected TreeMap <Integer, Double> preferenceIndex = new TreeMap <Integer, Double> ();
+	
+	protected ArrayList <TreeMap <Integer, Double>> sugar = new ArrayList <TreeMap <Integer, Double>> ();
+	protected ArrayList <TreeMap <Integer, Double>> water = new ArrayList <TreeMap <Integer, Double>> ();
+
+	protected TreeMap <Integer, ArrayList<Double>> movementRatio = new TreeMap <Integer, ArrayList<Double>>();
 	
 
 	public int setup(String arg, ImagePlus imp) {
@@ -48,7 +58,7 @@ public class Border_Substack implements PlugInFilter {
 
 		db.setup("",imp);
 		df.setup("",imp);
-		fm.setup("",imp2);
+		fm.setup("",imp);
 
 		// get size of image
 		byte[] pixels = (byte[])ip.getPixels();
@@ -93,9 +103,18 @@ public class Border_Substack implements PlugInFilter {
 		imp.killRoi();
 	//	substack (ip, imp, curr, stackSize);	// create substack from current slice until end of stack
 
-		detectFlies (ip, imp);
+		detectFlies (ip, imp, curr);
 	//	imp.close();
 	//	imp2.close();
+		if (mov == true) {
+			try {
+				fm.outputRatios(imp);
+				fm.outputNumbers(imp);
+				fm.createChannelVideo();
+			} catch (IOException e) {
+				System.err.println("Problem with writing the file");
+			  }
+		}
 
 	}
 
@@ -185,8 +204,8 @@ public class Border_Substack implements PlugInFilter {
 		// define results table
 		ResultsTable rt = Analyzer.getResultsTable();
 
-		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 80, maxSize: flies not bigger than 450, minCirc/maxCirc: flies have circularity between 0.6 and 0.8
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 450, 0.6, 0.8);
+		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 80, maxSize: flies not bigger than 550, minCirc/maxCirc: flies have circularity between 0.5 and 0.9
+		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 800, 0.5, 0.9);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity
@@ -244,20 +263,18 @@ public class Border_Substack implements PlugInFilter {
 
 	}
 
-	public void detectFlies (ImageProcessor ip2,ImagePlus imp2) {
+	public void detectFlies (ImageProcessor ip,ImagePlus imp, int curr) {
 		
-		int stackSize = imp2.getStackSize() ;	// get number of frames 
+		int stackSize = imp.getStackSize() ;	// get number of frames 
 		
-		for (int i = 1; i <= stackSize; i++) {	
+		for (int i = curr; i <= stackSize; i++) {	
 
-			imp2.setSlice(i);	// current slice is set
+			imp.setSlice(i);	// current slice is set
 
 			// set threshold
 
-			countFlies(maxThreshold, ip2, imp2, i, preferenceIndex);	// applying setThresh method
+			countFlies(ip, imp, i, preferenceIndex);	// applying setThresh method
 			
-
-
 		}
 
 	}
@@ -278,69 +295,59 @@ public class Border_Substack implements PlugInFilter {
 		
 	}
 
-	public ImagePlus getImp () {
+	public static ImagePlus getImp () {
 
-		return imp2;
+		return imp;
 	}
 
-	private void countFlies (double maxThreshold, ImageProcessor ip2, ImagePlus imp2, int i, TreeMap <Integer, Double> preferenceIndex) {
+	private void countFlies (ImageProcessor ip, ImagePlus imp, int i, TreeMap <Integer, Double> preferenceIndex) {
 
-		// create polygon for ROI with 4 points
-		int nPoints = 4;
-		int type = 2;
+		if (det == true){
 
-		float [] xPoints = db.getXPoints (); 
-		float [] yPoints = db.getYPoints ();   
+			prWater = fm.setWaterRoi();
+			imp.setRoi(prWater);		// set ROI
 
-		ip2.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
+			// double minThreshold = 0.0;
+			// ip2.setThreshold(minThreshold, maxThreshold, 0);	
 
-		Roi prWater = new PolygonRoi(xPoints, yPoints, nPoints, type);
+			// define results table
+			// ResultsTable rt = Analyzer.getResultsTable();
 
-		imp2.setRoi(prWater);		// set ROI
-
-		// double minThreshold = 0.0;
-		// ip2.setThreshold(minThreshold, maxThreshold, 0);	
-
-		// // define results table
-		// ResultsTable rt = Analyzer.getResultsTable();
-
-		// // measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-		// rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
+			// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
+			// rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
 		
-		df.run(ip2);
+			df.run(ip);
 
-		double wat = df.getCountedFlies();
-		//summaryWater.put(i, wat);
+			double wat = df.getCountedFlies();
+			//summaryWater.put(i, wat);
 		
-		if (i <= imp2.getStackSize()-1){
-			fm.run(ip2);
-		}
+			imp.killRoi();
 			
-		imp2.killRoi();
+			
+			prSugar = fm.setSugarRoi(ip);
+			imp.setRoi(prSugar);		// set ROI
 
-		float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
-		float [] yPoints2 = {yPoints[1]+1, (float) ip2.getHeight(),(float) ip2.getHeight(), yPoints[2]+1};  
+			// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
+			//	rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
 
-		Roi prSugar = new PolygonRoi(xPoints2, yPoints2, nPoints, type);
-
-		imp2.setRoi(prSugar);		// set ROI
-
-		// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
-	//	rt = db.tableAnalyser (imp2, rt, 9217, 0, 8, 150, 0, 1);
-
-		df.run(ip2);
-		double sug = df.getCountedFlies();
-		//summarySugar.put(i, sug);
+			df.run(ip);
+			double sug = df.getCountedFlies();
+			//summarySugar.put(i, sug);
 		
-		if (i <= imp.getStackSize()-1){
-			fm.run(ip2);
+			double prefInd = (sug - wat)/(sug + wat);
+		
+			preferenceIndex.put(i, prefInd);
+			
 		}
 		
-		double prefInd = (sug - wat)/(sug + wat);
+		if ((mov == true) && (i <= imp.getStackSize()-1)){
+			fm.run(ip);
+			movementRatio = fm.getMovementRatio();
+		}
 		
-		preferenceIndex.put(i, prefInd);
-
 	}
+	
+
 	
 
 }

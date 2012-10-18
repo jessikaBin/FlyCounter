@@ -30,6 +30,8 @@ public class Detect_Flies implements PlugInFilter {
 	}
 
 	public void run(ImageProcessor ip) {
+	
+		// countedFlies.clear();
 
 		
 		byte[] pixels = (byte[])ip.getPixels(); // get size of image
