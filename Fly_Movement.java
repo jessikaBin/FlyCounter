@@ -55,25 +55,36 @@ public class Fly_Movement implements PlugInFilter {
 	
 	}
 	
-	public void setRoiWat (ImagePlus imp) {
+	public void setRoiWat (ImagePlus imp, ResultsTable rt) {
 	
-			Roi wat = setWaterRoi();
+			Roi wat = setWaterRoi(rt);
 			imp.setRoi(wat);
 	
 	}
 	
-	protected Roi setWaterRoi(){
+	protected Roi setWaterRoi(ResultsTable rt){
 			
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
 		int type = 2;
 	
-		float [] xPoints = Detect_Border_CF.getXPoints (); 
-		float [] yPoints = Detect_Border_CF.getYPoints ();   
+		float [] xPoints = Detect_Border_CF.getXPointsWat (); 
+		float [] yPoints = Detect_Border_CF.getYPointsWat ();   
 
 		//ip.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
 
 		Roi water = new PolygonRoi(xPoints, yPoints, nPoints, type);
+		
+				// rt.reset();
+		
+				// for ( int i = 0; i<xPoints.length; i++){
+			// rt.incrementCounter();
+			
+			// rt.addValue("X", xPoints[i]);
+			// rt.addValue("Y", yPoints[i]);	
+		// }
+		
+		// rt.show ("Results");
 		
 		return water;
 	}
@@ -84,27 +95,39 @@ public class Fly_Movement implements PlugInFilter {
 		int nPoints = 4;
 		int type = 2;
 	
-		float [] xPoints = Detect_Border_CF.getXPoints (); 
-		float [] yPoints = Detect_Border_CF.getYPoints (); 
+		float [] xPoints = Detect_Border_CF.getXPointsSug (); 
+		float [] yPoints = Detect_Border_CF.getYPointsSug (); 
 	
-		float a = yPoints[1]+1;
-		float b = xPoints[2];
-		float c = xPoints[2];
-		float d = yPoints[3]+1;
+		// float a = yPoints[1]+1.0f;
+		// float b = xPoints[2];
+		// float c = xPoints[2];
+		// float d = yPoints[2]+1.0f;
 	
-		float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
-		float [] yPoints2 = {a,b,c,d};  
+		// float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
+		// float [] yPoints2 = {a,b,c,d};  
 
-		Roi sugar = new PolygonRoi(xPoints2, yPoints2, nPoints, type);	
+		//rt.reset();
+		Roi sugar = new PolygonRoi(xPoints, yPoints, nPoints, type);	
 		
-				for ( int i = 0; i<xPoints2.length; i++){
-			rt.incrementCounter();
+				// for ( int i = 0; i<xPoints.length; i++){
+			// rt.incrementCounter();
 			
-			rt.addValue("X", xPoints2[i]);
-			rt.addValue("Y", yPoints2[i]);	
-		}
+			// rt.addValue("X", xPoints[i]);
+			// rt.addValue("Y", yPoints[i]);	
+		// }
 		
-		rt.show ("Results");
+				// rt.reset();
+		// rt.incrementCounter();
+		// rt.addValue("a", yPoints[0]);
+		// rt.addValue("b", yPoints[1]);
+		// rt.addValue("c", yPoints[2]);
+		// rt.addValue("d", yPoints[3]);		
+		
+		
+
+		
+		
+//		rt.show ("Results");
 		
 		
 		return sugar;
@@ -170,7 +193,7 @@ public class Fly_Movement implements PlugInFilter {
 			setRoiSug(impMo, ipMo, rt);
 			double movSug = analyzeMoving(rt, pa, impMo, ipMo);
 			impMo.killRoi();
-			setRoiWat(impMo);
+			setRoiWat(impMo, rt);
 			double movWat = analyzeMoving(rt, pa, impMo, ipMo);
 			impMo.killRoi();
 
@@ -188,7 +211,7 @@ public class Fly_Movement implements PlugInFilter {
 			setRoiSug(impSt, ipSt, rt);
 			double staySug = analyzeStaying(rt, pa, impSt, ipSt);
 			impSt.killRoi();
-			setRoiWat(impSt);
+			setRoiWat(impSt, rt);
 			double stayWat = analyzeStaying(rt, pa, impSt, ipSt);
 			impSt.killRoi();
 			

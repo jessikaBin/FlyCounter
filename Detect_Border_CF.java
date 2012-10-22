@@ -16,8 +16,11 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	ImagePlus imp;
 
-	public static float [] xPoints = new float [4];
-	public static float [] yPoints = new float [4]; 
+	public static float [] xPointsWat = new float [4];
+	public static float [] yPointsWat = new float [4]; 
+	
+	public static float [] xPointsSug = new float [4];
+	public static float [] yPointsSug = new float [4];
 	
 	public String result = "";
 
@@ -161,16 +164,18 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	// method to draw the border 
 	private void drawBorder (ImageProcessor ip, ImagePlus imp) {
+	
+	ResultsTable rt = Analyzer.getResultsTable();
 
-		xPoints = new float [] {0, 0, xwidth, xwidth};	// array with x coordinates of detected border ROI
-		yPoints = new float [] {0, (float)params[0], (float)params[0]+(float)params[1]*xwidth, 0 };
+		xPointsWat = new float [] {0, 0, xwidth, xwidth};	// array with x coordinates of detected border ROI
+		yPointsWat = new float [] {0, (float)params[0], (float)params[0]+(float)params[1]*xwidth, 0 };
 
 
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
 		int type = 2;
 		
-		Roi pr = new PolygonRoi(xPoints, yPoints, nPoints, type);
+		Roi pr = new PolygonRoi(xPointsWat, yPointsWat, nPoints, type);
 
 		int stackSize = imp.getStackSize() ;	// get number of frames 
 
@@ -179,18 +184,64 @@ public class Detect_Border_CF implements PlugInFilter {
 			imp.setRoi(pr);	// draw detected border ROI
 		}
 		
+		xPointsSug = new float [] {xPointsWat[0], xPointsWat[1], xPointsWat[2], xPointsWat[3]};
+		
+		float a = yPointsWat[1]+(float)1.0;
+		float b = xPointsWat[2];
+		float c = xPointsWat[2];
+		float d = yPointsWat[2]+(float)1.0;
+		yPointsSug = new float [] {a,b,c,d};
+		
+						// rt.reset();
+		// rt.incrementCounter();
+		// rt.addValue("a", yPointsWat[1]);
+		// rt.addValue("b",yPointsWat[1]+(float)1.0);
+		// rt.addValue("c", yPointsWat[2]);
+		// rt.addValue("d", yPointsWat[2]+(float)1.0);		
+		
+		
+		// rt.show ("Results");
+		
 	}
 	
-	public static float [] getXPoints () {
+	public static float [] getXPointsWat () {
+	
+	
 
-		return xPoints;	
+		return xPointsWat;	
 	
 	}
 
 
-	public static float [] getYPoints () {
+	public static float [] getYPointsWat () {
+	
+		// ResultsTable rt = Analyzer.getResultsTable();
+	
+			// rt.reset();
+		// rt.incrementCounter();
+		// rt.addValue("a", yPointsWat[0]);
+		// rt.addValue("b",yPointsWat[1]);
+		// rt.addValue("c", yPointsWat[2]);
+		// rt.addValue("d", yPointsWat[3]);		
+		
+		
+		// rt.show ("Results");
 
-		return yPoints;	
+		return yPointsWat;	
+	
+	}
+	
+	public static float [] getXPointsSug () {
+
+		return xPointsSug;	
+	
+	}
+
+
+	public static float [] getYPointsSug () {
+	
+
+		return yPointsSug;	
 	
 	}
 	

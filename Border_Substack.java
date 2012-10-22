@@ -303,8 +303,10 @@ public class Border_Substack implements PlugInFilter {
 	private void countFlies (ImageProcessor ip, ImagePlus imp, int i, TreeMap <Integer, Double> preferenceIndex) {
 
 		if (det == true){
+		
+			ResultsTable rt = Analyzer.getResultsTable();
 
-			prWater = fm.setWaterRoi();
+			prWater = fm.setWaterRoi(rt);
 			imp.setRoi(prWater);		// set ROI
 
 			// double minThreshold = 0.0;
@@ -324,7 +326,7 @@ public class Border_Substack implements PlugInFilter {
 			imp.killRoi();
 			
 			
-			prSugar = fm.setSugarRoi(ip);
+			prSugar = fm.setSugarRoi(ip, rt);
 			imp.setRoi(prSugar);		// set ROI
 
 			// measurements: area & circularity & slice, options: show nothing, minSize: flies not smaller than 8, maxSize: flies not bigger than 150, minCirc/maxCirc: no defined circularity
