@@ -24,7 +24,7 @@ public class Border_Substack implements PlugInFilter {
 	private int flyCount = 0;   // count for testing whether flies are in frame or not  
 	
 //	private Detect_Border db = new Detect_Border (); 
-	private Detect_Border_CF db = new Detect_Border_CF (); 
+//	private Detect_Border_CF db = new Detect_Border_CF (); 
 	private Detect_Flies df = new Detect_Flies ();
 	private Fly_Movement fm = new Fly_Movement ();
 	
@@ -56,7 +56,7 @@ public class Border_Substack implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 
-		db.setup("",imp);
+	//	db.setup("",imp);
 		df.setup("",imp);
 		fm.setup("",imp);
 
@@ -93,8 +93,9 @@ public class Border_Substack implements PlugInFilter {
 				curr = imp.getCurrentSlice();	// starting frame is changed to current slice
 				imp.setSlice(curr-2);
 
-				db.run(ip);
-				result = db.getString ();
+				// db.run(ip);
+				fm.startBorderDetect(imp,ip);
+			//	result = db.getString ();
 				break;	
 			}
 
@@ -134,7 +135,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: particle not smaller than 3, maxSize: infinity, minCirc/maxCirc: no  defined circularity
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, 1);
+		rt = Detect_Border_CF.tableAnalyser (imp, rt, 8193, 0, 3, Double.POSITIVE_INFINITY, 0, 1);
 
 		if (rt.getCounter() == 0) {
 //			if (test == 3) {
@@ -205,7 +206,7 @@ public class Border_Substack implements PlugInFilter {
 		ResultsTable rt = Analyzer.getResultsTable();
 
 		// measurements: area & circularity, options: show nothing, minSize: flies not smaller than 80, maxSize: flies not bigger than 550, minCirc/maxCirc: flies have circularity between 0.5 and 0.9
-		rt = db.tableAnalyser (imp, rt, 8193, 0, 80, 800, 0.5, 0.9);
+		rt = Detect_Border_CF.tableAnalyser (imp, rt, 8193, 0, 80, 800, 0.5, 0.9);
 
 		String [] splitt = new String [3];
 		ArrayList <Double> circ = new ArrayList <Double> (); // array list for saving the values for circularity

@@ -16,11 +16,11 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	ImagePlus imp;
 
-	public static float [] xPointsWat = new float [4];
-	public static float [] yPointsWat = new float [4]; 
+	public  float [] xPointsWat = new float [4];
+	public  float [] yPointsWat = new float [4]; 
 	
-	public static float [] xPointsSug = new float [4];
-	public static float [] yPointsSug = new float [4];
+	public  float [] xPointsSug = new float [4];
+	public  float [] yPointsSug = new float [4];
 	
 	public String result = "";
 
@@ -70,7 +70,7 @@ public class Detect_Border_CF implements PlugInFilter {
 	}	
 
 	// method to define ResultsTable and run Particle Analyser
-	protected ResultsTable tableAnalyser (ImagePlus imp, ResultsTable rt, int measurements, int options, double minSize, double maxSize, double minCirc, double maxCirc) {
+	protected static ResultsTable tableAnalyser (ImagePlus imp, ResultsTable rt, int measurements, int options, double minSize, double maxSize, double minCirc, double maxCirc) {
 
 		// define results table
 		rt.reset();
@@ -204,7 +204,19 @@ public class Detect_Border_CF implements PlugInFilter {
 		
 	}
 	
-	public static float [] getXPointsWat () {
+	public  float [] getXPointsWat () {
+	
+					ResultsTable rt = Analyzer.getResultsTable();
+	
+			rt.reset();
+		rt.incrementCounter();
+		rt.addValue("a", xPointsWat[0]);
+		rt.addValue("b",xPointsWat[1]);
+		rt.addValue("c", xPointsWat[2]);
+		rt.addValue("d", xPointsWat[3]);		
+		
+		
+		rt.show ("Results");
 	
 	
 
@@ -213,32 +225,27 @@ public class Detect_Border_CF implements PlugInFilter {
 	}
 
 
-	public static float [] getYPointsWat () {
+	public  float [] getYPointsWat () {
 	
-		// ResultsTable rt = Analyzer.getResultsTable();
-	
-			// rt.reset();
-		// rt.incrementCounter();
-		// rt.addValue("a", yPointsWat[0]);
-		// rt.addValue("b",yPointsWat[1]);
-		// rt.addValue("c", yPointsWat[2]);
-		// rt.addValue("d", yPointsWat[3]);		
-		
-		
-		// rt.show ("Results");
+
 
 		return yPointsWat;	
 	
 	}
 	
-	public static float [] getXPointsSug () {
+	public  float [] getXPointsSug () {
+	
+
+	
 
 		return xPointsSug;	
 	
 	}
 
 
-	public static float [] getYPointsSug () {
+	public  float [] getYPointsSug () {
+	
+
 	
 
 		return yPointsSug;	

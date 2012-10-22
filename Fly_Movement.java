@@ -19,6 +19,8 @@ import java.util.Map.Entry;
 
 public class Fly_Movement implements PlugInFilter {
 
+	private Detect_Border_CF db = new Detect_Border_CF ();
+
 	ImagePlus imp;
 	
 	private AVI_Writer aw = new AVI_Writer();
@@ -48,6 +50,11 @@ public class Fly_Movement implements PlugInFilter {
 		
 	}
 	
+	public void startBorderDetect (ImagePlus imp, ImageProcessor ip) {
+		db.setup("",imp);
+		db.run(ip);
+	}
+	
 	public void setRoiSug (ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
 	
 			Roi sug = setSugarRoi(ip, rt);
@@ -68,8 +75,8 @@ public class Fly_Movement implements PlugInFilter {
 		int nPoints = 4;
 		int type = 2;
 	
-		float [] xPoints = Detect_Border_CF.getXPointsWat (); 
-		float [] yPoints = Detect_Border_CF.getYPointsWat ();   
+		float [] xPoints = db.getXPointsWat (); 
+		float [] yPoints = db.getYPointsWat ();   
 
 		//ip.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
 
@@ -95,8 +102,8 @@ public class Fly_Movement implements PlugInFilter {
 		int nPoints = 4;
 		int type = 2;
 	
-		float [] xPoints = Detect_Border_CF.getXPointsSug (); 
-		float [] yPoints = Detect_Border_CF.getYPointsSug (); 
+		float [] xPoints = db.getXPointsSug (); 
+		float [] yPoints = db.getYPointsSug (); 
 	
 		// float a = yPoints[1]+1.0f;
 		// float b = xPoints[2];
