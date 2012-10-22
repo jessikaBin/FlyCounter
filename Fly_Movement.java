@@ -48,9 +48,9 @@ public class Fly_Movement implements PlugInFilter {
 		
 	}
 	
-	public void setRoiSug (ImagePlus imp, ImageProcessor ip) {
+	public void setRoiSug (ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
 	
-			Roi sug = setSugarRoi(ip);
+			Roi sug = setSugarRoi(ip, rt);
 			imp.setRoi(sug);
 	
 	}
@@ -78,7 +78,7 @@ public class Fly_Movement implements PlugInFilter {
 		return water;
 	}
 	
-	protected Roi setSugarRoi(ImageProcessor ip){
+	protected Roi setSugarRoi(ImageProcessor ip, ResultsTable rt){
 	
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
@@ -87,11 +87,24 @@ public class Fly_Movement implements PlugInFilter {
 		float [] xPoints = Detect_Border_CF.getXPoints (); 
 		float [] yPoints = Detect_Border_CF.getYPoints (); 
 	
+		float a = yPoints[1]+1;
+		float b = xPoints[2];
+		float c = xPoints[2];
+		float d = yPoints[3]+1;
 	
 		float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]}; 
-		float [] yPoints2 = {yPoints[1]+1, (float) ip.getHeight(),(float) ip.getHeight(), yPoints[2]+1};  
+		float [] yPoints2 = {a,b,c,d};  
 
 		Roi sugar = new PolygonRoi(xPoints2, yPoints2, nPoints, type);	
+		
+				for ( int i = 0; i<xPoints2.length; i++){
+			rt.incrementCounter();
+			
+			rt.addValue("X", xPoints2[i]);
+			rt.addValue("Y", yPoints2[i]);	
+		}
+		
+		rt.show ("Results");
 		
 		
 		return sugar;
@@ -154,7 +167,7 @@ public class Fly_Movement implements PlugInFilter {
 			
 			ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12, Double.POSITIVE_INFINITY, 0, 1); 
 			
-			setRoiSug(impMo, ipMo);
+			setRoiSug(impMo, ipMo, rt);
 			double movSug = analyzeMoving(rt, pa, impMo, ipMo);
 			impMo.killRoi();
 			setRoiWat(impMo);
@@ -172,7 +185,7 @@ public class Fly_Movement implements PlugInFilter {
 			
 			rt.reset();
 			
-			setRoiSug(impSt, ipSt);
+			setRoiSug(impSt, ipSt, rt);
 			double staySug = analyzeStaying(rt, pa, impSt, ipSt);
 			impSt.killRoi();
 			setRoiWat(impSt);
@@ -249,14 +262,14 @@ public class Fly_Movement implements PlugInFilter {
 			
 		double still = 0.0;
 		for (int j=0; j< rt.getCounter(); j++){
-			String [] splitt = new String [2];
+			String [] splitt = new String [rt.getLastColumn()];
 
 			String row = rt.getRowAsString(j);
 			splitt =  row.split(",");
 			if (splitt.length == 1){
 				splitt = row.split("\t");
 			}	
-			double a = Double.parseDouble(splitt[1]); // circularity values are in second column 
+			double a = Double.parseDouble(splitt[1]); // area values are in second column 
 			still = still + a;
 		}
 			
@@ -275,14 +288,14 @@ public class Fly_Movement implements PlugInFilter {
 
 		double staying = 0.0;
 		for (int j=0; j< rt.getCounter (); j++){
-			String [] splitt = new String [2];
+			String [] splitt = new String [rt.getLastColumn()];
 
 			String row = rt.getRowAsString(j);
 			splitt =  row.split(",");
 			if (splitt.length == 1){
 				splitt = row.split("\t");
 			}	
-			double a = Double.parseDouble(splitt[1]); // circularity values are in second column 
+			double a = Double.parseDouble(splitt[1]); // area values are in second column 
 			staying = staying + a;
 		}
 		

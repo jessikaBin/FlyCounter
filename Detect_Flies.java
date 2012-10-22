@@ -334,20 +334,19 @@ public class Detect_Flies implements PlugInFilter {
 
 
 			for (int k=0; k<x.length;k++){
-			try {
+				try {
 				
-				if (x[k] != 0 && y[k] != 0) {
-					xPoints[k]=x[k];
-					yPoints[k]=y[k];
-				}
+					if (x[k] != 0 && y[k] != 0) {
+						xPoints[k]=x[k];
+						yPoints[k]=y[k];
+					}
 				
 				}
-				    catch (IndexOutOfBoundsException ex )
-    {
-      System.out.println("Es ist folgendes Problem aufgetreten: " + ex.getMessage()
-          + "\nHier ist wobei es passiert ist:\n");
-      ex.printStackTrace();
-    }
+				catch (IndexOutOfBoundsException ex ) {
+					System.out.println("Es ist folgendes Problem aufgetreten: " + ex.getMessage()
+					+ "\nHier ist wobei es passiert ist:\n");
+					ex.printStackTrace();
+				}
 			}
 		
 			
