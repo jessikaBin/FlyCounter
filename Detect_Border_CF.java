@@ -1,16 +1,9 @@
 import ij.*;
 import ij.measure.*;
 import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
 import ij.plugin.filter.*;
 import java.util.*;
-import java.awt.Color;
 import ij.measure.CurveFitter;
-
-import ij.gui.GenericDialog;
-
-import ij.IJ;
 
 public class Detect_Border_CF implements PlugInFilter {
 
@@ -45,7 +38,7 @@ public class Detect_Border_CF implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 
 		// get size of image
-		byte[] pixels = (byte[])ip.getPixels();
+//		byte[] pixels = (byte[])ip.getPixels();
 		int width = ip.getWidth();
 		int height = ip.getHeight();
 
@@ -74,10 +67,10 @@ public class Detect_Border_CF implements PlugInFilter {
 
 		// define results table
 		rt.reset();
-		if (rt == null) {
-        			rt = new ResultsTable();
-       			Analyzer.setResultsTable(rt);
-		}
+//		if (rt == null) {
+//        			rt = new ResultsTable();
+//       			Analyzer.setResultsTable(rt);
+//		}
 
 		// set particle analyzer
 		ParticleAnalyzer pa = new ParticleAnalyzer(options, measurements, rt, minSize, maxSize, minCirc, maxCirc); 
@@ -165,19 +158,20 @@ public class Detect_Border_CF implements PlugInFilter {
 	// method to draw the border 
 	private void drawBorder (ImageProcessor ip, ImagePlus imp) {
 	
-	ResultsTable rt = Analyzer.getResultsTable();
+
+		//	ResultsTable rt = Analyzer.getResultsTable();
 
 		xPointsWat = new float [] {0, 0, xwidth, xwidth};	// array with x coordinates of detected border ROI
 		yPointsWat = new float [] {0, (float)params[0], (float)params[0]+(float)params[1]*xwidth, 0 };
 
 
 		// create polygon for ROI with 4 points
-		int nPoints = 4;
-		int type = 2;
+//		int nPoints = 4;
+//		int type = 2;
 		
-		Roi pr = new PolygonRoi(xPointsWat, yPointsWat, nPoints, type);
+//		Roi pr = new PolygonRoi(xPointsWat, yPointsWat, nPoints, type);
 
-		int stackSize = imp.getStackSize() ;	// get number of frames 
+//		int stackSize = imp.getStackSize() ;	// get number of frames 
 
 		//for ( int i = imp.getCurrentSlice(); i <= stackSize; i ++)  {
 		//	imp.setSlice(i);
