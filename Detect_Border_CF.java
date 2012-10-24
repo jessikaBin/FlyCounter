@@ -179,10 +179,10 @@ public class Detect_Border_CF implements PlugInFilter {
 
 		int stackSize = imp.getStackSize() ;	// get number of frames 
 
-		for ( int i = imp.getCurrentSlice(); i <= stackSize; i ++)  {
-			imp.setSlice(i);
-			imp.setRoi(pr);	// draw detected border ROI
-		}
+		//for ( int i = imp.getCurrentSlice(); i <= stackSize; i ++)  {
+		//	imp.setSlice(i);
+		//	imp.setRoi(pr);	// draw detected border ROI
+		//}
 		
 		xPointsSug = new float [] {xPointsWat[0], xPointsWat[1], xPointsWat[2], xPointsWat[3]};
 		
@@ -191,7 +191,12 @@ public class Detect_Border_CF implements PlugInFilter {
 		float c = xPointsWat[2];
 		float d = yPointsWat[2]+(float)1.0;
 		yPointsSug = new float [] {a,b,c,d};
-		
+		// String myString = String.format("y=%s,%s,%s,%s", a,b,c,d);
+		// IJ.log(myString);
+		// myString = String.format("y_array=%s,%s,%s,%s", yPointsSug[0],yPointsSug[1],yPointsSug[2],yPointsSug[3]);
+		// IJ.log(myString);
+		//myString = String.format("x=%s,%s,%s,%s", xPointsSug[0],xPointsSug[1],xPointsSug[2],xPointsSug[3]);
+		//IJ.log(myString);
 						// rt.reset();
 		// rt.incrementCounter();
 		// rt.addValue("a", yPointsWat[1]);
@@ -206,49 +211,55 @@ public class Detect_Border_CF implements PlugInFilter {
 	
 	public  float [] getXPointsWat () {
 	
-					ResultsTable rt = Analyzer.getResultsTable();
+	//				ResultsTable rt = Analyzer.getResultsTable();
 	
-			rt.reset();
-		rt.incrementCounter();
-		rt.addValue("a", xPointsWat[0]);
-		rt.addValue("b",xPointsWat[1]);
-		rt.addValue("c", xPointsWat[2]);
-		rt.addValue("d", xPointsWat[3]);		
+	//		rt.reset();
+	//	rt.incrementCounter();
+	//	rt.addValue("a", xPointsWat[0]);
+	//	rt.addValue("b",xPointsWat[1]);
+	//	rt.addValue("c", xPointsWat[2]);
+	//	rt.addValue("d", xPointsWat[3]);		
 		
 		
-		rt.show ("Results");
+	//	rt.show ("Results");
 	
 	
+		//String myString = String.format("get_xwat=%s,%s,%s,%s", xPointsWat[0],xPointsWat[1],xPointsWat[2],xPointsWat[3]);
+		//IJ.log(myString);
+		
+		float [] copy_of_xPointsWat = (float[])xPointsWat.clone();
 
-		return xPointsWat;	
-	
+		return copy_of_xPointsWat;
+
 	}
 
 
 	public  float [] getYPointsWat () {
 	
+		float [] copy_of_yPointsWat = (float[])yPointsWat.clone();
 
-
-		return yPointsWat;	
+		return copy_of_yPointsWat;	
 	
 	}
 	
 	public  float [] getXPointsSug () {
-	
+			// String myString = String.format("get_x=%s,%s,%s,%s", xPointsSug[0],xPointsSug[1],xPointsSug[2],xPointsSug[3]);
+			// IJ.log(myString);
+		float [] copy_of_xPointsSug = (float[])xPointsSug.clone();
 
-	
-
-		return xPointsSug;	
+		return copy_of_xPointsSug;	
 	
 	}
 
 
 	public  float [] getYPointsSug () {
-	
 
-	
+		float [] copy_of_yPointsSug = (float[])yPointsSug.clone();
+		
+				 // String myString = String.format("get_y=%s,%s,%s,%s", copy_of_yPointsSug[0],copy_of_yPointsSug[1],copy_of_yPointsSug[2],copy_of_yPointsSug[3]);
+		 // IJ.log(myString);
 
-		return yPointsSug;	
+		return copy_of_yPointsSug;	
 	
 	}
 	

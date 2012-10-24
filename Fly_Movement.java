@@ -62,7 +62,7 @@ public class Fly_Movement implements PlugInFilter {
 	
 	}
 	
-	public void setRoiWat (ImagePlus imp, ResultsTable rt) {
+	public void setRoiWat (ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
 	
 			Roi wat = setWaterRoi(rt);
 			imp.setRoi(wat);
@@ -80,7 +80,10 @@ public class Fly_Movement implements PlugInFilter {
 
 		//ip.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2], (int) yPoints[2]) ;
 
-		Roi water = new PolygonRoi(xPoints, yPoints, nPoints, type);
+		float [] copy_of_xPoints = (float[])xPoints.clone();
+		float [] copy_of_yPoints = (float[])yPoints.clone();
+		
+		Roi water = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints, type);
 		
 				// rt.reset();
 		
@@ -114,7 +117,13 @@ public class Fly_Movement implements PlugInFilter {
 		// float [] yPoints2 = {a,b,c,d};  
 
 		//rt.reset();
-		Roi sugar = new PolygonRoi(xPoints, yPoints, nPoints, type);	
+		// String myString = String.format("get_y=%s,%s,%s,%s", yPoints[0],yPoints[1],yPoints[2],yPoints[3]);
+		// IJ.log(myString);
+		
+		float [] copy_of_xPoints = (float[])xPoints.clone();
+		float [] copy_of_yPoints = (float[])yPoints.clone();
+		
+		Roi sugar = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints, type);	
 		
 				// for ( int i = 0; i<xPoints.length; i++){
 			// rt.incrementCounter();
@@ -197,12 +206,16 @@ public class Fly_Movement implements PlugInFilter {
 			
 			ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12, Double.POSITIVE_INFINITY, 0, 1); 
 			
+
+			setRoiWat(impMo, ipMo, rt);
+			double movWat = analyzeMoving(rt, pa, impMo, ipMo);
+			impMo.killRoi();
+		//	ipMo.resetRoi();
 			setRoiSug(impMo, ipMo, rt);
 			double movSug = analyzeMoving(rt, pa, impMo, ipMo);
 			impMo.killRoi();
-			setRoiWat(impMo, rt);
-			double movWat = analyzeMoving(rt, pa, impMo, ipMo);
-			impMo.killRoi();
+			// ipMo.resetRoi();
+
 
 			ImagePlus impSt = ic.run("Max create", imp1, imp2);
 			ImageProcessor ipSt = impSt.getProcessor();
@@ -214,13 +227,15 @@ public class Fly_Movement implements PlugInFilter {
 			ipSt.dilate();
 			
 			rt.reset();
-			
+
+			setRoiWat(impSt, ipSt, rt);
+			double stayWat = analyzeStaying(rt, pa, impSt, ipSt);
+			impSt.killRoi();
+			// ipSt.resetRoi();
 			setRoiSug(impSt, ipSt, rt);
 			double staySug = analyzeStaying(rt, pa, impSt, ipSt);
 			impSt.killRoi();
-			setRoiWat(impSt, rt);
-			double stayWat = analyzeStaying(rt, pa, impSt, ipSt);
-			impSt.killRoi();
+			// ipSt.resetRoi();
 			
 			ArrayList <Double> numbers = new ArrayList <Double> ();
 			
