@@ -51,19 +51,29 @@ public class Fly_Movement implements PlugInFilter {
 
 	public void setRoiSug(ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
 
-		Roi sug = setSugarRoi(ip, rt);
+		PolygonRoi sug = setSugarRoi(ip, rt);
 		imp.setRoi(sug);
+		
+
+		
+
 
 	}
 
-	public void setRoiWat(ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
+	public void setRoiWat(ImagePlus imp, ImageProcessor ip) {
 
-		Roi wat = setWaterRoi(rt);
+		PolygonRoi wat = setWaterRoi();
 		imp.setRoi(wat);
+		
+				int [] y = wat.getYCoordinates();
+		
+		String myString = String.format("y=%s,%s,%s,%s", y[0],y[1],y[2],y[3]);
+		IJ.log(myString);
+
 
 	}
 
-	protected Roi setWaterRoi(ResultsTable rt) {
+	protected PolygonRoi setWaterRoi() {
 
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
@@ -78,7 +88,7 @@ public class Fly_Movement implements PlugInFilter {
 		float[] copy_of_xPoints = (float[]) xPoints.clone();
 		float[] copy_of_yPoints = (float[]) yPoints.clone();
 
-		Roi water = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
+		PolygonRoi water = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
 				type);
 
 		// rt.reset();
@@ -95,7 +105,7 @@ public class Fly_Movement implements PlugInFilter {
 		return water;
 	}
 
-	protected Roi setSugarRoi(ImageProcessor ip, ResultsTable rt) {
+	protected PolygonRoi setSugarRoi(ImageProcessor ip, ResultsTable rt) {
 
 		// create polygon for ROI with 4 points
 		int nPoints = 4;
@@ -120,7 +130,7 @@ public class Fly_Movement implements PlugInFilter {
 		float[] copy_of_xPoints = (float[]) xPoints.clone();
 		float[] copy_of_yPoints = (float[]) yPoints.clone();
 
-		Roi sugar = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
+		PolygonRoi sugar = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
 				type);
 
 		// for ( int i = 0; i<xPoints.length; i++){
@@ -191,21 +201,22 @@ public class Fly_Movement implements PlugInFilter {
 		// ipMoIn.invert();
 
 		ipMo.setThreshold(0, 26, 0);
-
-		ipMo.erode();
+		
 		ipMo.dilate();
+		ipMo.erode();
+
 
 		rt.reset();
 
-		ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12,
-				Double.POSITIVE_INFINITY, 0, 1);
-
-		setRoiWat(impMo, ipMo, rt);
-		double movWat = analyzeMoving(rt, pa, impMo, ipMo);
+		boolean w = true;
+		setRoiWat(impMo, ipMo);
+		double movWat = analyzeMoving(rt, impMo, ipMo, w);
 		impMo.killRoi();
 		// ipMo.resetRoi();
+		
+		w = false;
 		setRoiSug(impMo, ipMo, rt);
-		double movSug = analyzeMoving(rt, pa, impMo, ipMo);
+		double movSug = analyzeMoving(rt, impMo, ipMo, w);
 		impMo.killRoi();
 		// ipMo.resetRoi();
 
@@ -220,12 +231,13 @@ public class Fly_Movement implements PlugInFilter {
 
 		rt.reset();
 
-		setRoiWat(impSt, ipSt, rt);
-		double stayWat = analyzeStaying(rt, pa, impSt, ipSt);
+		setRoiWat(impSt, ipSt);
+		double stayWat = analyzeStaying(rt, impSt, ipSt);
 		impSt.killRoi();
 		// ipSt.resetRoi();
+		
 		setRoiSug(impSt, ipSt, rt);
-		double staySug = analyzeStaying(rt, pa, impSt, ipSt);
+		double staySug = analyzeStaying(rt, impSt, ipSt);
 		impSt.killRoi();
 		// ipSt.resetRoi();
 
@@ -291,8 +303,14 @@ public class Fly_Movement implements PlugInFilter {
 
 	}
 
-	public double analyzeMoving(ResultsTable rt, ParticleAnalyzer pa,
-			ImagePlus impMo, ImageProcessor ipMo) {
+	public double analyzeMoving(ResultsTable rt,
+			ImagePlus impMo, ImageProcessor ipMo, boolean w) {
+			
+					ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12,
+				Double.POSITIVE_INFINITY, 0, 1);
+			
+			rt.reset();
+			
 
 		pa.analyze(impMo); // apply particle analysis
 
@@ -309,18 +327,59 @@ public class Fly_Movement implements PlugInFilter {
 														// second column
 			still = still + a;
 		}
+		
+		float [] xPoints;
+		float [] yPoints;
+		
+		double moving;
+		if (w == true) {
+		xPoints = db.getXPointsWat();
+		yPoints = db.getYPointsWat();
+		
+		double width = (double)xPoints[3];
+		double height = (double)Math.max(yPoints[1],yPoints[2]);
+		double less = height -((double) Math.min(yPoints[1],yPoints[2]));
+		
+		 moving = (((width * height) - ((width* less)/2.0)) - still);
+		
+		}
+		else {
+		
+		xPoints = db.getXPointsSug();
+		yPoints = db.getYPointsSug();
+		
+		double width = (double)xPoints[3];
+		double height = (double)yPoints[1] - (double)Math.min(yPoints[0],yPoints[3]);
+		double less = ((double)Math.max(yPoints[0],yPoints[3]) - (double)Math.min(yPoints[0],yPoints[3]));
+		
+		 moving = (((width * height) - ((width* less)/2.0)) - still);
+		
+		}
+		
+		// String myString = String.format("x=%s,%s,%s,%s", xPoints[0],xPoints[1],xPoints[2],xPoints[3]);
+		// IJ.log(myString);
+		// myString = String.format("y=%s,%s,%s,%s", yPoints[0],yPoints[1],yPoints[2],yPoints[3]);
+		// IJ.log(myString);
+		
 
-		double width = (double) ipMo.getWidth();
-		double height = (double) ipMo.getHeight();
+		
 
-		double moving = (width * height) - still;
+		// double width = (double) ipMo.getWidth();
+		// double height = (double) ipMo.getHeight();
+
+	//	double moving = (width * height) - still;
 
 		return moving;
 
 	}
 
-	public double analyzeStaying(ResultsTable rt, ParticleAnalyzer pa,
+	public double analyzeStaying(ResultsTable rt,
 			ImagePlus impSt, ImageProcessor ipSt) {
+			
+					ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12,
+				Double.POSITIVE_INFINITY, 0, 1);
+			
+			rt.reset();
 
 		pa.analyze(impSt); // apply particle analysis
 
