@@ -207,11 +207,18 @@ public class Fly_Movement implements PlugInFilter {
 
 
 		rt.reset();
+		
+		float [] xPoints = db.getXPointsWat();
+		float [] yPoints = db.getYPointsWat();
+		
+		double width = (double)xPoints[3];
 
 		boolean w = true;
-		setRoiWat(impMo, ipMo);
-		double movWat = analyzeMoving(rt, impMo, ipMo, w);
-		impMo.killRoi();
+		boolean m = true;
+		//setRoiWat(impMo, ipMo);
+		// double movWat = analyzeMoving(rt, impMo, ipMo, w);
+		double movWat = analyseRoi (width, yPoints, ipMo, m);
+	//	impMo.killRoi();
 		// ipMo.resetRoi();
 		
 		w = false;
@@ -231,9 +238,11 @@ public class Fly_Movement implements PlugInFilter {
 
 		rt.reset();
 
-		setRoiWat(impSt, ipSt);
-		double stayWat = analyzeStaying(rt, impSt, ipSt);
-		impSt.killRoi();
+		m = false;
+	//	setRoiWat(impSt, ipSt);
+	//	double stayWat = analyzeStaying(rt, impSt, ipSt);
+		double stayWat = analyseRoi (width, yPoints, ipSt, m);
+	//	impSt.killRoi();
 		// ipSt.resetRoi();
 		
 		setRoiSug(impSt, ipSt, rt);
@@ -340,7 +349,7 @@ public class Fly_Movement implements PlugInFilter {
 		double height = (double)Math.max(yPoints[1],yPoints[2]);
 		double less = height -((double) Math.min(yPoints[1],yPoints[2]));
 		
-		 moving = (((width * height) - ((width* less)/2.0)) - still);
+		moving = (((width * height) - ((width* less)/2.0)) - still);
 		
 		}
 		else {
@@ -352,7 +361,7 @@ public class Fly_Movement implements PlugInFilter {
 		double height = (double)yPoints[1] - (double)Math.min(yPoints[0],yPoints[3]);
 		double less = ((double)Math.max(yPoints[0],yPoints[3]) - (double)Math.min(yPoints[0],yPoints[3]));
 		
-		 moving = (((width * height) - ((width* less)/2.0)) - still);
+		moving = (((width * height) - ((width* less)/2.0)) - still);
 		
 		}
 		
@@ -371,6 +380,64 @@ public class Fly_Movement implements PlugInFilter {
 
 		return moving;
 
+	}
+	
+	protected double analyseRoi (double width, float [] yPoints, ImageProcessor ip, boolean m) {
+	
+		double max = Math.floor(Math.max(yPoints[1], yPoints[2]));
+		double min = Math.floor(Math.min(yPoints[1], yPoints[2]));
+		
+		double count = 0.0;
+		
+		for (int j = 0; j< min; j++) {
+			for (int k=0; k< width; k++){
+				if (m == true){
+					if (ip.getPixel(k,j) == 1) {
+						count ++;
+					}
+				} else {
+					if (ip.getPixel(k,j) == 0) {
+						count ++;
+					}
+				}
+			}		
+		}
+
+		TreeMap <Double, Double> values = new TreeMap <Double, Double> ();
+		values = (TreeMap <Double, Double>)db.calculateCoordinates ();
+		for (double i = min; i <= max; i++) {
+		
+			double coord = values.get(i);
+
+			if ( max == yPoints[1]) {
+				for ( double l=0; l<= coord; l++){	
+					if (m == true){
+						if (ip.getPixelInterpolated(l,i) == 1) {
+							count ++;
+						}	
+					} else {
+						if (ip.getPixelInterpolated(l,i) == 0) {
+							count ++;
+						}
+					}
+				}
+			} else {
+				for ( double l=coord; l<= width; l++){
+					if (m == true){
+						if (ip.getPixelInterpolated(l,i) == 1) {
+							count ++;
+						}	
+					} else {
+						if (ip.getPixelInterpolated(l,i) == 0) {
+							count ++;
+						}
+					}
+				}
+			}
+		}
+	
+		return count;
+	
 	}
 
 	public double analyzeStaying(ResultsTable rt,

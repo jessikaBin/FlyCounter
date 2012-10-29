@@ -24,6 +24,8 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	ArrayList <Float> xa = new ArrayList <Float> ();	// x coordinates of detected border ROI
 	ArrayList <Float> ya = new ArrayList <Float> ();	// y coordinates of detected border ROI 	
+	
+	protected TreeMap <Double, Double> borderValues = new TreeMap <Double, Double> ();
 
 	
 
@@ -152,6 +154,23 @@ public class Detect_Border_CF implements PlugInFilter {
 
 		return min;
 
+	}
+	
+	protected TreeMap <Double, Double> calculateCoordinates () {
+	
+		double begin = Math.floor(Math.min(params[0], params[0]+params[1]*xwidth));
+		double end = Math.floor(Math.max(params[0], params[0]+params[1]*xwidth));
+		
+		for (double i = begin; i <= end; i++) {
+		
+			double value = (i - params[0])/params[1];
+			borderValues.put(i, value);
+		String myString = String.format("v=%s, %s", value,i);
+		IJ.log(myString);
+		
+		}
+		
+		return borderValues;
 	}
 	
 

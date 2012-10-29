@@ -327,7 +327,7 @@ public class Border_Substack implements PlugInFilter {
 
 			ResultsTable rt = Analyzer.getResultsTable();
 
-			prWater = fm.setWaterRoi(rt);
+			prWater = fm.setWaterRoi();
 			imp.setRoi(prWater); // set ROI
 
 			// double minThreshold = 0.0;
