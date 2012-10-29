@@ -213,18 +213,19 @@ public class Fly_Movement implements PlugInFilter {
 		
 		double width = (double)xPoints[3];
 
-		boolean w = true;
-		boolean m = true;
+		boolean w = true;	// true on water side
+		boolean m = true;	// true when moving
 		//setRoiWat(impMo, ipMo);
 		// double movWat = analyzeMoving(rt, impMo, ipMo, w);
-		double movWat = analyseRoi (width, yPoints, ipMo, m);
+		double movWat = analyseRoi (width, yPoints, ipMo, m, w);
 	//	impMo.killRoi();
 		// ipMo.resetRoi();
 		
 		w = false;
-		setRoiSug(impMo, ipMo, rt);
-		double movSug = analyzeMoving(rt, impMo, ipMo, w);
-		impMo.killRoi();
+	//	setRoiSug(impMo, ipMo, rt);
+	//	double movSug = analyzeMoving(rt, impMo, ipMo, w);
+		double movSug = analyseRoi (width, yPoints, ipMo, m, w);
+	//	impMo.killRoi();
 		// ipMo.resetRoi();
 
 		ImagePlus impSt = ic.run("Max create", imp1, imp2);
@@ -238,16 +239,19 @@ public class Fly_Movement implements PlugInFilter {
 
 		rt.reset();
 
+		w = true;
 		m = false;
 	//	setRoiWat(impSt, ipSt);
 	//	double stayWat = analyzeStaying(rt, impSt, ipSt);
-		double stayWat = analyseRoi (width, yPoints, ipSt, m);
+		double stayWat = analyseRoi (width, yPoints, ipSt, m, w);
 	//	impSt.killRoi();
 		// ipSt.resetRoi();
 		
-		setRoiSug(impSt, ipSt, rt);
-		double staySug = analyzeStaying(rt, impSt, ipSt);
-		impSt.killRoi();
+		w = false;
+	//	setRoiSug(impSt, ipSt, rt);
+	//	double staySug = analyzeStaying(rt, impSt, ipSt);
+		double staySug = analyseRoi (width, yPoints, ipSt, m, w);
+	//	impSt.killRoi();
 		// ipSt.resetRoi();
 
 		ArrayList<Double> numbers = new ArrayList<Double>();
@@ -382,59 +386,113 @@ public class Fly_Movement implements PlugInFilter {
 
 	}
 	
-	protected double analyseRoi (double width, float [] yPoints, ImageProcessor ip, boolean m) {
+	protected double analyseRoi (double width, float [] yPoints, ImageProcessor ip, boolean m, boolean w) {
 	
+		double count = 0.0;
 		double max = Math.floor(Math.max(yPoints[1], yPoints[2]));
 		double min = Math.floor(Math.min(yPoints[1], yPoints[2]));
 		
-		double count = 0.0;
-		
-		for (int j = 0; j< min; j++) {
-			for (int k=0; k< width; k++){
-				if (m == true){
-					if (ip.getPixel(k,j) == 1) {
-						count ++;
-					}
-				} else {
-					if (ip.getPixel(k,j) == 0) {
-						count ++;
-					}
-				}
-			}		
-		}
-
 		TreeMap <Double, Double> values = new TreeMap <Double, Double> ();
 		values = (TreeMap <Double, Double>)db.calculateCoordinates ();
-		for (double i = min; i <= max; i++) {
 		
-			double coord = values.get(i);
-
-			if ( max == yPoints[1]) {
-				for ( double l=0; l<= coord; l++){	
+	
+		if (w == true) {
+	
+			for (int j = 0; j< min; j++) {
+				for (int k=0; k<= width; k++){
 					if (m == true){
-						if (ip.getPixelInterpolated(l,i) == 1) {
+						if (ip.getPixel(k,j) == 1) {
 							count ++;
-						}	
+						}
 					} else {
-						if (ip.getPixelInterpolated(l,i) == 0) {
+						if (ip.getPixel(k,j) == 0) {
 							count ++;
 						}
 					}
-				}
-			} else {
-				for ( double l=coord; l<= width; l++){
-					if (m == true){
-						if (ip.getPixelInterpolated(l,i) == 1) {
-							count ++;
-						}	
-					} else {
-						if (ip.getPixelInterpolated(l,i) == 0) {
-							count ++;
+				}		
+			}
+			
+			for (double i = min; i <= max; i++) {
+		
+				double coord = values.get(i);
+
+				if ( max == yPoints[1]) {
+					for ( double l=0; l<= coord; l++){	
+						if (m == true){
+							if (ip.getPixelInterpolated(l,i) == 1) {
+								count ++;
+							}	
+						} else {
+							if (ip.getPixelInterpolated(l,i) == 0) {
+								count ++;
+							}
+						}
+					}
+				} else {
+					for ( double l=coord; l<= width; l++){
+						if (m == true){
+							if (ip.getPixelInterpolated(l,i) == 1) {
+								count ++;
+							}	
+						} else {
+							if (ip.getPixelInterpolated(l,i) == 0) {
+								count ++;
+							}
 						}
 					}
 				}
 			}
+		
+		} else {
+			for (int j = (int)max+1; j<= width; j++) {
+				for (int k=0; k<= width; k++){
+					if (m == true){
+						if (ip.getPixel(k,j) == 1) {
+							count ++;
+						}
+					} else {
+						if (ip.getPixel(k,j) == 0) {
+							count ++;
+						}
+					}
+				}		
+			}
+			
+			for (double i = min; i <= max; i++) {
+		
+				double coord = values.get(i);
+
+				if ( max == yPoints[1]) {
+					for (double l=coord; l<= width; l++){	
+						if (m == true){
+							if (ip.getPixelInterpolated(l,i) == 1) {
+								count ++;
+							}	
+						} else {
+							if (ip.getPixelInterpolated(l,i) == 0) {
+								count ++;
+							}
+						}
+					}
+				} else {
+					for (double l=0; l<= coord; l++){
+						if (m == true){
+							if (ip.getPixelInterpolated(l,i) == 1) {
+								count ++;
+							}	
+						} else {
+							if (ip.getPixelInterpolated(l,i) == 0) {
+								count ++;
+							}
+						}
+					}
+				}
+			}
+		
 		}
+
+
+
 	
 		return count;
 	
