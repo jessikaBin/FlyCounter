@@ -67,8 +67,8 @@ public class Fly_Movement implements PlugInFilter {
 		
 				int [] y = wat.getYCoordinates();
 		
-		String myString = String.format("y=%s,%s,%s,%s", y[0],y[1],y[2],y[3]);
-		IJ.log(myString);
+	//	String myString = String.format("y=%s,%s,%s,%s", y[0],y[1],y[2],y[3]);
+	//	IJ.log(myString);
 
 
 	}
@@ -200,7 +200,8 @@ public class Fly_Movement implements PlugInFilter {
 		// ImageProcessor ipMoIn = impMoIn.getProcessor();
 		// ipMoIn.invert();
 
-		ipMo.setThreshold(0, 26, 0);
+		//ipMo.setThreshold(0, 26, 0);
+		ipMo.threshold(26);
 		
 		ipMo.dilate();
 		ipMo.erode();
@@ -215,24 +216,25 @@ public class Fly_Movement implements PlugInFilter {
 
 		boolean w = true;	// true on water side
 		boolean m = true;	// true when moving
-		//setRoiWat(impMo, ipMo);
-		// double movWat = analyzeMoving(rt, impMo, ipMo, w);
-		double movWat = analyseRoi (width, yPoints, ipMo, m, w);
-	//	impMo.killRoi();
+		setRoiWat(impMo, ipMo);
+		double movWat = analyzeMoving(rt, impMo, ipMo, w);
+	//	double movWat = analyseRoi (width, yPoints, ipMo, m, w);
+		impMo.killRoi();
 		// ipMo.resetRoi();
 		
 		w = false;
-	//	setRoiSug(impMo, ipMo, rt);
-	//	double movSug = analyzeMoving(rt, impMo, ipMo, w);
-		double movSug = analyseRoi (width, yPoints, ipMo, m, w);
-	//	impMo.killRoi();
+		setRoiSug(impMo, ipMo, rt);
+		double movSug = analyzeMoving(rt, impMo, ipMo, w);
+	//	double movSug = analyseRoi (width, yPoints, ipMo, m, w);
+		impMo.killRoi();
 		// ipMo.resetRoi();
 
 		ImagePlus impSt = ic.run("Max create", imp1, imp2);
 		ImageProcessor ipSt = impSt.getProcessor();
 
 		int auto = ipSt.getAutoThreshold();
-		ipSt.setThreshold(0, auto - 40, 0);
+		//ipSt.setThreshold(0, auto - 40, 0);
+		ipSt.threshold(auto-40);
 
 		ipSt.erode();
 		ipSt.dilate();
@@ -241,17 +243,19 @@ public class Fly_Movement implements PlugInFilter {
 
 		w = true;
 		m = false;
-	//	setRoiWat(impSt, ipSt);
-	//	double stayWat = analyzeStaying(rt, impSt, ipSt);
-		double stayWat = analyseRoi (width, yPoints, ipSt, m, w);
-	//	impSt.killRoi();
+		setRoiWat(impSt, ipSt);
+		double stayWat = analyzeStaying(rt, impSt, ipSt);
+	//	double stayWat = analyseRoi (width, yPoints, ipSt, m, w);
+		impSt.killRoi();
 		// ipSt.resetRoi();
+	//	ImageWindow	iw = new ImageWindow(impMo); // substack is opened in new window
+	//	WindowManager.setCurrentWindow(iw);
 		
 		w = false;
-	//	setRoiSug(impSt, ipSt, rt);
-	//	double staySug = analyzeStaying(rt, impSt, ipSt);
-		double staySug = analyseRoi (width, yPoints, ipSt, m, w);
-	//	impSt.killRoi();
+		setRoiSug(impSt, ipSt, rt);
+		double staySug = analyzeStaying(rt, impSt, ipSt);
+	//	double staySug = analyseRoi (width, yPoints, ipSt, m, w);
+		impSt.killRoi();
 		// ipSt.resetRoi();
 
 		ArrayList<Double> numbers = new ArrayList<Double>();
@@ -401,7 +405,7 @@ public class Fly_Movement implements PlugInFilter {
 			for (int j = 0; j< min; j++) {
 				for (int k=0; k<= width; k++){
 					if (m == true){
-						if (ip.getPixel(k,j) == 1) {
+						if (ip.getPixel(k,j) == 255) {
 							count ++;
 						}
 					} else {
@@ -419,7 +423,7 @@ public class Fly_Movement implements PlugInFilter {
 				if ( max == yPoints[1]) {
 					for ( double l=0; l<= coord; l++){	
 						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 1) {
+							if (ip.getPixelInterpolated(l,i) == 255) {
 								count ++;
 							}	
 						} else {
@@ -431,7 +435,7 @@ public class Fly_Movement implements PlugInFilter {
 				} else {
 					for ( double l=coord; l<= width; l++){
 						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 1) {
+							if (ip.getPixelInterpolated(l,i) == 255) {
 								count ++;
 							}	
 						} else {
@@ -447,7 +451,7 @@ public class Fly_Movement implements PlugInFilter {
 			for (int j = (int)max+1; j<= width; j++) {
 				for (int k=0; k<= width; k++){
 					if (m == true){
-						if (ip.getPixel(k,j) == 1) {
+						if (ip.getPixel(k,j) == 255) {
 							count ++;
 						}
 					} else {
@@ -465,7 +469,7 @@ public class Fly_Movement implements PlugInFilter {
 				if ( max == yPoints[1]) {
 					for (double l=coord; l<= width; l++){	
 						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 1) {
+							if (ip.getPixelInterpolated(l,i) == 255) {
 								count ++;
 							}	
 						} else {
@@ -477,7 +481,7 @@ public class Fly_Movement implements PlugInFilter {
 				} else {
 					for (double l=0; l<= coord; l++){
 						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 1) {
+							if (ip.getPixelInterpolated(l,i) == 255) {
 								count ++;
 							}	
 						} else {

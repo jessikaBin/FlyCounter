@@ -217,7 +217,7 @@ public class Border_Substack implements PlugInFilter {
 		// flies not smaller than 80, maxSize: flies not bigger than 550,
 		// minCirc/maxCirc: flies have circularity between 0.5 and 0.9
 		rt = Detect_Border_CF
-				.tableAnalyser(imp, rt, 8193, 0, 80, 800, 0.5, 0.9);
+				.tableAnalyser(imp, rt, 8193, 0, 100, 800, 0.5, 0.9);
 
 		String[] splitt = new String[3];
 		ArrayList<Double> circ = new ArrayList<Double>(); // array list for

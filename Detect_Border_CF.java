@@ -165,8 +165,8 @@ public class Detect_Border_CF implements PlugInFilter {
 		
 			double value = (i - params[0])/params[1];
 			borderValues.put(i, value);
-		String myString = String.format("v=%s, %s", value,i);
-		IJ.log(myString);
+	//	String myString = String.format("v=%s, %s", value,i);
+	//	IJ.log(myString);
 		
 		}
 		
