@@ -1,4 +1,12 @@
 
+/**
+ * This PlugIn Maximum_Finder_Modified modified the original ImageJ plugin MaximumFinder
+ * (http://rsbweb.nih.gov/ij/developer/source/ij/plugin/filter/MaximumFinder.java.html)
+ * Instead of starting the plugIn with the run-method, the class Detect_Flies.java invokes the 
+ * PlugIns at the findMaxima-methods with preset variables.
+ * Furthermore a method getResultsTable was created to use the resultstable later on in the
+ * Detect_Flies class.
+ */
 import ij.plugin.filter.*;
 import ij.*;
 import ij.gui.*;

@@ -1,30 +1,36 @@
+
 import ij.*;
 import ij.process.*;
-import ij.gui.*;
 import ij.plugin.filter.*;
 import ij.plugin.ImageCalculator;
+import ij.gui.PolygonRoi;
 import ij.measure.ResultsTable;
-import ij.plugin.filter.ParticleAnalyzer;
-import ij.plugin.RGBStackMerge;
 import ij.ImageStack;
 
-import java.util.TreeMap;
 import java.util.*;
 import java.io.*;
 import java.util.Map.Entry;
 
+/**
+ * This PlugIn Fly_Movement detects movement of flies in frames and calculates a
+ * ratio to indicate this.
+ * 
+ */
 public class Fly_Movement implements PlugInFilter {
 
 	private Detect_Border_CF db = new Detect_Border_CF();
 
 	ImagePlus imp;
 
-	private AVI_Writer aw = new AVI_Writer();
-
+	// TreeMap that saves to each frame (key) a movement ratio (value)
 	public TreeMap<Integer, ArrayList<Double>> movementRatio = new TreeMap<Integer, ArrayList<Double>>();
-	public TreeMap<Integer, ArrayList<Double>> numbersForFrame = new TreeMap<Integer, ArrayList<Double>>();
 
-	public ArrayList<ImageProcessor> slices = new ArrayList<ImageProcessor>();
+	/*
+	 * TreeMap that saves to each frame (key) a ArrayList of different numbers
+	 * for each the sugar and water side(value) in following order: moving
+	 * particles|staying particles|denominator|numerator
+	 */
+	public TreeMap<Integer, ArrayList<Double>> numbersForFrame = new TreeMap<Integer, ArrayList<Double>>();
 
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
@@ -35,44 +41,31 @@ public class Fly_Movement implements PlugInFilter {
 
 		movement(ip);
 
-		// try {
-		// outputRatios(imp);
-		// outputNumbers(imp);
-		// } catch (IOException e) {
-		// System.err.println("Problem with writing the file");
-		// }
-
 	}
 
+	// method only used to start the border detection
 	public void startBorderDetect(ImagePlus imp, ImageProcessor ip) {
 		db.setup("", imp);
 		db.run(ip);
 	}
-
+	
+	// method that sets the ROI for sugar side
 	public void setRoiSug(ImagePlus imp, ImageProcessor ip, ResultsTable rt) {
 
 		PolygonRoi sug = setSugarRoi(ip, rt);
 		imp.setRoi(sug);
 		
-
-		
-
-
 	}
 
+	// method that sets the ROI for water side
 	public void setRoiWat(ImagePlus imp, ImageProcessor ip) {
 
 		PolygonRoi wat = setWaterRoi();
 		imp.setRoi(wat);
 		
-				int [] y = wat.getYCoordinates();
-		
-	//	String myString = String.format("y=%s,%s,%s,%s", y[0],y[1],y[2],y[3]);
-	//	IJ.log(myString);
-
-
 	}
 
+	// method that gets the coordinates for ROI of water side
 	protected PolygonRoi setWaterRoi() {
 
 		// create polygon for ROI with 4 points
@@ -82,29 +75,16 @@ public class Fly_Movement implements PlugInFilter {
 		float[] xPoints = db.getXPointsWat();
 		float[] yPoints = db.getYPointsWat();
 
-		// ip.drawLine((int) xPoints[1], (int)yPoints[1] , (int)xPoints[2],
-		// (int) yPoints[2]) ;
-
 		float[] copy_of_xPoints = (float[]) xPoints.clone();
 		float[] copy_of_yPoints = (float[]) yPoints.clone();
 
 		PolygonRoi water = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
 				type);
 
-		// rt.reset();
-
-		// for ( int i = 0; i<xPoints.length; i++){
-		// rt.incrementCounter();
-
-		// rt.addValue("X", xPoints[i]);
-		// rt.addValue("Y", yPoints[i]);
-		// }
-
-		// rt.show ("Results");
-
 		return water;
 	}
 
+	// method that gets the coordinates for ROI of water side
 	protected PolygonRoi setSugarRoi(ImageProcessor ip, ResultsTable rt) {
 
 		// create polygon for ROI with 4 points
@@ -114,128 +94,89 @@ public class Fly_Movement implements PlugInFilter {
 		float[] xPoints = db.getXPointsSug();
 		float[] yPoints = db.getYPointsSug();
 
-		// float a = yPoints[1]+1.0f;
-		// float b = xPoints[2];
-		// float c = xPoints[2];
-		// float d = yPoints[2]+1.0f;
-
-		// float [] xPoints2 = {0, 0, xPoints[2], xPoints[3]};
-		// float [] yPoints2 = {a,b,c,d};
-
-		// rt.reset();
-		// String myString = String.format("get_y=%s,%s,%s,%s",
-		// yPoints[0],yPoints[1],yPoints[2],yPoints[3]);
-		// IJ.log(myString);
-
 		float[] copy_of_xPoints = (float[]) xPoints.clone();
 		float[] copy_of_yPoints = (float[]) yPoints.clone();
 
 		PolygonRoi sugar = new PolygonRoi(copy_of_xPoints, copy_of_yPoints, nPoints,
 				type);
 
-		// for ( int i = 0; i<xPoints.length; i++){
-		// rt.incrementCounter();
-
-		// rt.addValue("X", xPoints[i]);
-		// rt.addValue("Y", yPoints[i]);
-		// }
-
-		// rt.reset();
-		// rt.incrementCounter();
-		// rt.addValue("a", yPoints[0]);
-		// rt.addValue("b", yPoints[1]);
-		// rt.addValue("c", yPoints[2]);
-		// rt.addValue("d", yPoints[3]);
-
-		// rt.show ("Results");
-
 		return sugar;
 
 	}
 
+	// method that analyses the movement
 	public void movement(ImageProcessor ip) {
 
-		ResultsTable rt = Analyzer.getResultsTable();
+		ResultsTable rt = Analyzer.getResultsTable(); // create results table
 
-		// for (int i = 1; i <= imp.getStackSize()-1; i++) {
-		imp = Border_Substack.getImp();
-		int i = imp.getCurrentSlice();
+		imp = Video_Analysis.getImp();
+		int current = imp.getCurrentSlice(); // use current slice
 
+		// create new ImagePlus and ImageProcessor for current frame
 		ImagePlus imp1;
 		ImageStack is1 = new ImageStack();
-		// SubstackMaker sm1 = new SubstackMaker();
-		// String start = String.valueOf(i); // starting frame is current slice
-		// String ende = String.valueOf(i); // ending frame is last slice
-		// StringBuilder text1 = new StringBuilder(start);
-		// text1.append("-");
-		// text1.append(ende);
-		// String stack = text1.toString();
-		// imp1 = sm1.makeSubstack(imp, stack); // substack is created
 		is1 = imp.getStack();
-		ImageProcessor ip1 = is1.getProcessor(i); // specify number of slice
+		ImageProcessor ip1 = is1.getProcessor(current);
 		imp1 = new ImagePlus("Imp1", ip1);
 
+		// create new ImagePlus and ImageProcessor for frame after current frame
 		ImagePlus imp2;
 		ImageStack is2 = new ImageStack();
-		// SubstackMaker sm2 = new SubstackMaker();
-		// start = String.valueOf(i+1); // starting frame is current slice
-		// ende = String.valueOf(i+1); // ending frame is last slice
-		// StringBuilder text2 = new StringBuilder(start);
-		// text2.append("-");
-		// text2.append(ende);
-		// stack = text2.toString();
-		// imp2 = sm2.makeSubstack(imp, stack); // substack is created
 		is2 = imp.getStack();
-		ImageProcessor ip2 = is2.getProcessor(i + 1); // specify number of slice
-		// imp2.setProcessor(ip2);
+		ImageProcessor ip2 = is2.getProcessor(current + 1);
 		imp2 = new ImagePlus("Imp2", ip2);
 
+		// create ImageCalculator object to perform calculations on frames
 		ImageCalculator ic = new ImageCalculator();
-		// ImageCalculator icStay = new ImageCalculator();
 
+		/*
+		 * Calculate the difference between the two frames, in order to get the
+		 * parts of flies that are moving between them, saves the result in a
+		 * new image
+		 */
 		ImagePlus impMo = ic.run("Difference create", imp1, imp2);
 		ImageProcessor ipMo = impMo.getProcessor();
 
-		// ImagePlus impMoIn = impMo.duplicate();
-		// ImageProcessor ipMoIn = impMoIn.getProcessor();
-		// ipMoIn.invert();
-
-		//ipMo.setThreshold(0, 26, 0);
+		// a threshold is set to threshold the fly parts
 		ipMo.threshold(26);
-		
+
+		// filter out noise particles
 		ipMo.dilate();
 		ipMo.erode();
 
-
 		rt.reset();
-		
-		float [] xPoints = db.getXPointsWat();
-		float [] yPoints = db.getYPointsWat();
-		
-		double width = (double)xPoints[3];
 
-		boolean w = true;	// true on water side
-		boolean m = true;	// true when moving
-		setRoiWat(impMo, ipMo);
-		double movWat = analyzeMoving(rt, impMo, ipMo, w);
-	//	double movWat = analyseRoi (width, yPoints, ipMo, m, w);
-		impMo.killRoi();
-		// ipMo.resetRoi();
-		
-		w = false;
-		setRoiSug(impMo, ipMo, rt);
-		double movSug = analyzeMoving(rt, impMo, ipMo, w);
-	//	double movSug = analyseRoi (width, yPoints, ipMo, m, w);
-		impMo.killRoi();
-		// ipMo.resetRoi();
+		float[] xPoints = db.getXPointsWat(); // x coordinates of the calculates
+												// ROI for the water side
+		float[] yPoints = db.getYPointsWat(); // y coordinates of the calculates
+												// ROI for the water side
 
+		double width = (double) xPoints[3]; // width of the image
+
+		boolean w = true; // parameter that is TRUE on water side
+		boolean m = true; // parameter that is TRUE when moving
+
+		// counts moving particles on water side
+		double movWat = analyseRoi(width, yPoints, ipMo, m, w);
+
+		w = false; // change to sugar side
+
+		// counts moving particles on sugar side
+		double movSug = analyseRoi(width, yPoints, ipMo, m, w);
+
+		/*
+		 * Calculate the Maximum between the two frames, in order to get the
+		 * part of flies that are not changing between the two frames, saves the
+		 * result in a new image
+		 */
 		ImagePlus impSt = ic.run("Max create", imp1, imp2);
 		ImageProcessor ipSt = impSt.getProcessor();
 
+		// a threshold is set to threshold the fly parts
 		int auto = ipSt.getAutoThreshold();
-		//ipSt.setThreshold(0, auto - 40, 0);
-		ipSt.threshold(auto-40);
+		ipSt.threshold(auto - 40);
 
+		// filter out noise particles
 		ipSt.erode();
 		ipSt.dilate();
 
@@ -243,74 +184,57 @@ public class Fly_Movement implements PlugInFilter {
 
 		w = true;
 		m = false;
-		setRoiWat(impSt, ipSt);
-		double stayWat = analyzeStaying(rt, impSt, ipSt);
-	//	double stayWat = analyseRoi (width, yPoints, ipSt, m, w);
-		impSt.killRoi();
-		// ipSt.resetRoi();
-	//	ImageWindow	iw = new ImageWindow(impMo); // substack is opened in new window
-	//	WindowManager.setCurrentWindow(iw);
-		
-		w = false;
-		setRoiSug(impSt, ipSt, rt);
-		double staySug = analyzeStaying(rt, impSt, ipSt);
-	//	double staySug = analyseRoi (width, yPoints, ipSt, m, w);
-		impSt.killRoi();
-		// ipSt.resetRoi();
 
+		// counts staying particles on water side
+		double stayWat = analyseRoi(width, yPoints, ipSt, m, w);
+
+		// change to sugar side
+		w = false;
+
+		// counts staying particles on sugar side
+		double staySug = analyseRoi(width, yPoints, ipSt, m, w);
+
+		// ArrayList that saves the numbers for the TreeMap numbersForFrame
 		ArrayList<Double> numbers = new ArrayList<Double>();
 
+		// calculate a ratio for the sugar and water side
 		double ratioSug = calculate(movSug, staySug, numbers);
 		double ratioWat = calculate(movWat, stayWat, numbers);
 
+		// ArrayList that saves the ratios for sugar and water side
 		ArrayList<Double> ratio = new ArrayList<Double>();
 
-		ratio.add(ratioSug);
-		ratio.add(ratioWat);
+		ratio.add(ratioSug); // add ratio sugar side
+		ratio.add(ratioWat); // add ratio water side
 
-		movementRatio.put(i, ratio);
-		numbersForFrame.put(i, numbers);
-
-		// ImagePlus[] im = new ImagePlus[2];
-		// im[0] = impMoIn;
-		// im[1] = impSt;
-		// RGBStackMerge m = new RGBStackMerge();
-		// ImagePlus impChannel = m.mergeChannels(im, true);
-		// ImageProcessor ipChannel = impChannel.getProcessor();
-
-		// slices.add (ipChannel);
-
-		// }
+		movementRatio.put(current, ratio); // fill TreeMap
+		numbersForFrame.put(current, numbers); // fill TreeMap
 
 	}
 
+	// method that calculates the ratios for the sugar and water side of the
+	// arend
 	public double calculate(double moving, double staying,
 			ArrayList<Double> numbers) {
 
-		double ratio;
-		double denominator;
-		double numerator = moving / 2;
-		if (moving == 0.0) {
+		double ratio; // parameter for the ratio
+		double denominator; // parameter for denominator of equation
+		double numerator = moving / 2; // parameter for numerator of equation
+		if (moving == 0.0) { // if no flies are moving
 			ratio = 0.0;
 			denominator = staying;
-		} else if (staying == 0.0) {
+		} else if (staying == 0.0) { // if all flies are moving
 			ratio = 1.0;
 			denominator = moving / 2;
 		} else {
 			denominator = (moving / 2) + staying;
-			ratio = (moving / 2) / denominator;
-			ratio = (double) Math.round(ratio * 100) / 100;
+			ratio = (moving / 2) / denominator; // calculate ratio
+			ratio = (double) Math.round(ratio * 100) / 100; // round ratio on
+															// two decimal
+															// places
 		}
 
-		// ImagePlus[] im = new ImagePlus[2];
-		// im[0] = impMoIn;
-		// im[1] = impSt;
-		// RGBStackMerge m = new RGBStackMerge();
-		// ImagePlus impChannel = m.mergeChannels(im, true);
-		// ImageProcessor ipChannel = impChannel.getProcessor();
-
-		// slices.add (ipChannel);
-
+		// fill treeMap with numbers
 		numbers.add(moving);
 		numbers.add(staying);
 		numbers.add(denominator);
@@ -320,252 +244,144 @@ public class Fly_Movement implements PlugInFilter {
 
 	}
 
-	public double analyzeMoving(ResultsTable rt,
-			ImagePlus impMo, ImageProcessor ipMo, boolean w) {
-			
-					ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12,
-				Double.POSITIVE_INFINITY, 0, 1);
-			
-			rt.reset();
-			
+	// method that counts the pixels that indicate flies
+	protected double analyseRoi(double width, float[] yPoints,
+			ImageProcessor ip, boolean m, boolean w) {
 
-		pa.analyze(impMo); // apply particle analysis
+		double count = 0.0; // parameter for counting pixels
+		double max = Math.floor(Math.max(yPoints[1], yPoints[2])); // higher y
+																	// coordinate
+		double min = Math.floor(Math.min(yPoints[1], yPoints[2])); // lower y
+																	// coordinate
 
-		double still = 0.0;
-		for (int j = 0; j < rt.getCounter(); j++) {
-			String[] splitt = new String[rt.getLastColumn()];
+		/*
+		 * TreeMap that uses the former calculated x coordinates to the y
+		 * coordinates between max and min
+		 */
+		TreeMap<Double, Double> values = new TreeMap<Double, Double>();
+		values = (TreeMap<Double, Double>) db.calculateCoordinates();
 
-			String row = rt.getRowAsString(j);
-			splitt = row.split(",");
-			if (splitt.length == 1) {
-				splitt = row.split("\t");
-			}
-			double a = Double.parseDouble(splitt[1]); // area values are in
-														// second column
-			still = still + a;
-		}
-		
-		float [] xPoints;
-		float [] yPoints;
-		
-		double moving;
-		if (w == true) {
-		xPoints = db.getXPointsWat();
-		yPoints = db.getYPointsWat();
-		
-		double width = (double)xPoints[3];
-		double height = (double)Math.max(yPoints[1],yPoints[2]);
-		double less = height -((double) Math.min(yPoints[1],yPoints[2]));
-		
-		moving = (((width * height) - ((width* less)/2.0)) - still);
-		
-		}
-		else {
-		
-		xPoints = db.getXPointsSug();
-		yPoints = db.getYPointsSug();
-		
-		double width = (double)xPoints[3];
-		double height = (double)yPoints[1] - (double)Math.min(yPoints[0],yPoints[3]);
-		double less = ((double)Math.max(yPoints[0],yPoints[3]) - (double)Math.min(yPoints[0],yPoints[3]));
-		
-		moving = (((width * height) - ((width* less)/2.0)) - still);
-		
-		}
-		
-		// String myString = String.format("x=%s,%s,%s,%s", xPoints[0],xPoints[1],xPoints[2],xPoints[3]);
-		// IJ.log(myString);
-		// myString = String.format("y=%s,%s,%s,%s", yPoints[0],yPoints[1],yPoints[2],yPoints[3]);
-		// IJ.log(myString);
-		
+		if (w == true) {	// water side
 
-		
-
-		// double width = (double) ipMo.getWidth();
-		// double height = (double) ipMo.getHeight();
-
-	//	double moving = (width * height) - still;
-
-		return moving;
-
-	}
-	
-	protected double analyseRoi (double width, float [] yPoints, ImageProcessor ip, boolean m, boolean w) {
-	
-		double count = 0.0;
-		double max = Math.floor(Math.max(yPoints[1], yPoints[2]));
-		double min = Math.floor(Math.min(yPoints[1], yPoints[2]));
-		
-		TreeMap <Double, Double> values = new TreeMap <Double, Double> ();
-		values = (TreeMap <Double, Double>)db.calculateCoordinates ();
-		
-	
-		if (w == true) {
-	
-			for (int j = 0; j< min; j++) {
-				for (int k=0; k<= width; k++){
-					if (m == true){
-						if (ip.getPixel(k,j) == 255) {
-							count ++;
+			for (int j = 0; j < min; j++) {	// calculates in straight part of ROI
+				for (int k = 0; k <= width; k++) {
+					if (m == true) {	// moving
+						if (ip.getPixel(k, j) == 255) {	// all white pixels indicate flies
+							count++;
 						}
-					} else {
-						if (ip.getPixel(k,j) == 0) {
-							count ++;
+					} else {	// staying
+						if (ip.getPixel(k, j) == 0) {	// all black pixels indicate flies
+							count++;
 						}
 					}
-				}		
+				}
 			}
-			
-			for (double i = min; i <= max; i++) {
-		
-				double coord = values.get(i);
 
-				if ( max == yPoints[1]) {
-					for ( double l=0; l<= coord; l++){	
-						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 255) {
-								count ++;
-							}	
-						} else {
-							if (ip.getPixelInterpolated(l,i) == 0) {
-								count ++;
+			for (double i = min; i <= max; i++) {	// calculate in slope part of ROI
+
+				double coord = values.get(i);	// get x coordinate to current y coordinate
+
+				if (max == yPoints[1]) {	// check pixels in row until x coordinate
+					for (double l = 0; l <= coord; l++) {
+						if (m == true) {	// moving
+							if (ip.getPixelInterpolated(l, i) == 255) { // all white pixels indicate flies
+								count++;
+							}
+						} else {	// staying
+							if (ip.getPixelInterpolated(l, i) == 0) { // all black pixels indicate flies
+								count++;
 							}
 						}
 					}
-				} else {
-					for ( double l=coord; l<= width; l++){
-						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 255) {
-								count ++;
-							}	
-						} else {
-							if (ip.getPixelInterpolated(l,i) == 0) {
-								count ++;
+				} else {	// check pixels in row from x coordinate on 
+					for (double l = coord; l <= width; l++) {
+						if (m == true) {	// moving
+							if (ip.getPixelInterpolated(l, i) == 255) { // all white pixels indicate flies
+								count++;
+							}
+						} else { // staying
+							if (ip.getPixelInterpolated(l, i) == 0) { // all black pixels indicate flies
+								count++;
 							}
 						}
 					}
 				}
 			}
-		
-		} else {
-			for (int j = (int)max+1; j<= width; j++) {
-				for (int k=0; k<= width; k++){
-					if (m == true){
-						if (ip.getPixel(k,j) == 255) {
-							count ++;
+
+		} else {	// sugar side
+			for (int j = (int) max + 1; j <= width; j++) { // calculate straight part of ROI
+				for (int k = 0; k <= width; k++) {
+					if (m == true) {
+						if (ip.getPixel(k, j) == 255) {
+							count++;
 						}
 					} else {
-						if (ip.getPixel(k,j) == 0) {
-							count ++;
+						if (ip.getPixel(k, j) == 0) {
+							count++;
 						}
 					}
-				}		
+				}
 			}
-			
-			for (double i = min; i <= max; i++) {
-		
-				double coord = values.get(i);
 
-				if ( max == yPoints[1]) {
-					for (double l=coord; l<= width; l++){	
-						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 255) {
-								count ++;
-							}	
-						} else {
-							if (ip.getPixelInterpolated(l,i) == 0) {
-								count ++;
+			for (double i = min; i <= max; i++) { // calculate slope part of ROI
+
+				double coord = values.get(i);	// get x coordinate to current y coordinate
+
+				if (max == yPoints[1]) { // check pixels in row from x coordinate on
+					for (double l = coord; l <= width; l++) {
+						if (m == true) { // moving
+							if (ip.getPixelInterpolated(l, i) == 255) {
+								count++;
+							}
+						} else {	// staying
+							if (ip.getPixelInterpolated(l, i) == 0) {
+								count++;
 							}
 						}
 					}
-				} else {
-					for (double l=0; l<= coord; l++){
-						if (m == true){
-							if (ip.getPixelInterpolated(l,i) == 255) {
-								count ++;
-							}	
-						} else {
-							if (ip.getPixelInterpolated(l,i) == 0) {
-								count ++;
+				} else {	// check pixels in row until x coordinate
+					for (double l = 0; l <= coord; l++) {
+						if (m == true) {	// moving
+							if (ip.getPixelInterpolated(l, i) == 255) {
+								count++;
+							}
+						} else {	// staying
+							if (ip.getPixelInterpolated(l, i) == 0) {
+								count++;
 							}
 						}
 					}
 				}
 			}
-		
 		}
 
-
-
-	
 		return count;
-	
-	}
-
-	public double analyzeStaying(ResultsTable rt,
-			ImagePlus impSt, ImageProcessor ipSt) {
-			
-					ParticleAnalyzer pa = new ParticleAnalyzer(0, 1, rt, 12,
-				Double.POSITIVE_INFINITY, 0, 1);
-			
-			rt.reset();
-
-		pa.analyze(impSt); // apply particle analysis
-
-		double staying = 0.0;
-		for (int j = 0; j < rt.getCounter(); j++) {
-			String[] splitt = new String[rt.getLastColumn()];
-
-			String row = rt.getRowAsString(j);
-			splitt = row.split(",");
-			if (splitt.length == 1) {
-				splitt = row.split("\t");
-			}
-			double a = Double.parseDouble(splitt[1]); // area values are in
-														// second column
-			staying = staying + a;
-		}
-
-		return staying;
 
 	}
 
+	// get-method that returns the TreeMap that saves the movement ratio 
 	public TreeMap<Integer, ArrayList<Double>> getMovementRatio() {
 
 		return movementRatio;
 
 	}
 
+	// get method that returns the TreeMap that saves the miscellaneous numbers
 	public TreeMap<Integer, ArrayList<Double>> getnumbersForFrame() {
 
 		return numbersForFrame;
 
 	}
 
-	public void createChannelVideo() {
-
-		// ImageStack is = new ImageStack();
-
-		for (int i = 0; i < slices.size(); i++) {
-			// is.addSlice(slices.get(i));
-		}
-
-		// aw.setup("", imp2); // write the output .avi-file
-		// aw.run(ip2);
-
-	}
-
+	// method that makes the output of TreeMap numbersForFrame
 	public void outputNumbers(ImagePlus imp) throws IOException {
 
 		String title = imp.getTitle();
-		String path = Batch_Run.myDir2;
+		String path = Batch_Run.myDir2;	// input path
 
 		File file = new File(path + title.substring(0, title.length() - 2)
 				+ "_denominator.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
-
-		// Set set = numbersForFrame.entrySet();
-		// Iterator i = set.iterator();
 
 		output.write("Frame" + "\t" + "Moving Sugar" + "\t" + "Staying Sugar"
 				+ "\t" + "Denominator Sugar" + "\t" + "Numerator Sugar" + "\t"
@@ -587,6 +403,7 @@ public class Fly_Movement implements PlugInFilter {
 
 	}
 
+	// method that makes the output of TreeMap movingRatio
 	public void outputRatios(ImagePlus imp) throws IOException {
 
 		String title = imp.getTitle();
@@ -595,9 +412,6 @@ public class Fly_Movement implements PlugInFilter {
 		File file = new File(path + title.substring(0, title.length() - 2)
 				+ "_movingRatio.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
-
-		// Set set = movementRatio.entrySet();
-		// Iterator i = set.iterator();
 
 		output.write("Frame" + "\t" + "Moving Rate Sugar" + "\t"
 				+ "Moving Rate Water" + "\n");
@@ -615,5 +429,4 @@ public class Fly_Movement implements PlugInFilter {
 		output.close();
 
 	}
-
 }

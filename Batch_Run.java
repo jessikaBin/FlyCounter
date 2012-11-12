@@ -1,3 +1,4 @@
+
 import java.io.File;
 import java.io.*;
 import java.util.*;
@@ -8,21 +9,33 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.gui.GenericDialog;
 
+/**
+ * This plugIn Batch_Run starts the batch processing for analyzing the videos.
+ * The Input- and Output-Folders can be chosen with a user dialog, and the
+ * analysis for each video is invoked. Furthermore it can be chosen (dialog
+ * window), whether to analyze the fly movement, the preference index or both.
+ * 
+ */
+
 public class Batch_Run implements PlugIn {
 
-	private Border_Substack bs = new Border_Substack();
-	private AVI_Writer aw = new AVI_Writer();
+	private Video_Analysis bs = new Video_Analysis();
+	private AVI_Writer_WD aw = new AVI_Writer_WD();
 
-	protected static String filename = "";
+	protected static String filename = ""; // source filename
 	protected static String myDir1 = ""; // Source Directory
 	protected static String myDir2 = ""; // Saving Directory
 
-	// protected static int flyThreshold = thresholdDialog (); // Threshold for
-	// Counting Flies
-	protected static boolean[] res = inputDialog();
+	protected static boolean[] res = inputDialog(); // parameter for types of
+													// analysis
 
-	protected static boolean mov = getMovement();
-	protected static boolean det = getDetection();
+	protected static boolean mov = getMovement(); // parameter for Movement
+													// analysis (TRUE: do
+													// analysis, FALSE: no
+													// analysis)
+	protected static boolean det = getDetection(); // parameter for preference
+													// index (TRUE: do analysis,
+													// FALSE: no analysis)
 
 	public void run(String arg) {
 
@@ -34,12 +47,14 @@ public class Batch_Run implements PlugIn {
 		if (myDir1 == null) {
 			return; // If no source folder is selected the plugin stops here
 		}
+		
 		String[] myListSources = new File(myDir1).list(); // all the file names
 															// in the source
 															// folder
 		if (myListSources == null) {
 			return;
 		}
+		
 		IJ.log("The source image folder chosen was" + myDir1); // opens the log
 																// window
 
@@ -51,8 +66,10 @@ public class Batch_Run implements PlugIn {
 		if (myDir2 == null) {
 			return; // If no saving folder is selected the plugin stops here
 		}
+		
 		IJ.log("The saving folder chosen was" + myDir2);
 
+		// do analysis for each .avi file in the chosen folder
 		for (int FileNumber = 0; FileNumber < myListSources.length; FileNumber++) {
 
 			IJ.showProgress(FileNumber, myListSources.length); // showing
@@ -74,7 +91,7 @@ public class Batch_Run implements PlugIn {
 				ImageProcessor myIp = myImPlus.getProcessor();
 				myImPlus.updateAndDraw();
 
-				bs.setup("", myImPlus); // run Border_Substack class
+				bs.setup("", myImPlus); // start analysis for video
 				bs.run(myIp);
 
 				// ImagePlus imp2 = bs.getImp();
@@ -101,23 +118,8 @@ public class Batch_Run implements PlugIn {
 		IJ.log("Completed");
 	}
 
-	// Method to set the Threshold in a Dialog
-	// public static int thresholdDialog () {
-
-	// int threshold = 100;
-
-	// GenericDialog gd = new GenericDialog("Set Threshold");
-	// gd.addNumericField("Threshold: ", threshold, 0);
-
-	// gd.showDialog();
-	// if (gd.wasCanceled()) {
-	// System.err.println( "No threshold was selected" );
-	// }
-	// threshold = (int)gd.getNextNumber();
-
-	// return threshold;
-	// }
-
+	// method for opening an inputDialog, that lets the user chose between the
+	// analyzing types
 	public static boolean[] inputDialog() {
 
 		boolean movement;
@@ -134,8 +136,10 @@ public class Batch_Run implements PlugIn {
 		if (gdIn.wasCanceled()) {
 			System.err.println("No results are chosen");
 		}
-		movement = gdIn.getNextBoolean();
-		detection = gdIn.getNextBoolean();
+		movement = gdIn.getNextBoolean(); // movement is assigned to the first
+											// checkbox
+		detection = gdIn.getNextBoolean(); // fly detection is assigned to the
+											// second checkbox
 
 		input[0] = movement;
 		input[1] = detection;
@@ -144,6 +148,7 @@ public class Batch_Run implements PlugIn {
 
 	}
 
+	// get-method to get the value of variable movement
 	public static boolean getMovement() {
 
 		boolean movement = res[0];
@@ -151,6 +156,7 @@ public class Batch_Run implements PlugIn {
 
 	}
 
+	// get-method to get the value of variable detection
 	public static boolean getDetection() {
 
 		boolean detection = res[1];
@@ -158,7 +164,7 @@ public class Batch_Run implements PlugIn {
 
 	}
 
-	// Method for Output a .xls-file for the results
+	// Method for Output a .txt-file for the results of the preference index
 	public void outputFile(String MyDir2, ImagePlus imp2) throws IOException {
 
 		String title = imp2.getTitle();
@@ -166,10 +172,6 @@ public class Batch_Run implements PlugIn {
 		File file = new File(MyDir2 + title.substring(0, title.length() - 2)
 				+ "_preferenceIndex" + ".txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
-
-		// ArrayList <TreeMap <Integer, Integer>> summaries = bs.getMaps ();
-		// TreeMap <Integer, Integer> summaryWater = summaries.get(0);
-		// TreeMap <Integer, Integer> summarySugar = summaries.get(1);
 
 		TreeMap<Integer, Double> prefInd = bs.getPrefInd();
 
@@ -183,8 +185,6 @@ public class Batch_Run implements PlugIn {
 			output.write(me.getKey() + "\t"
 					+ ((Double) me.getValue()).doubleValue() + "\n");
 		}
-
-		// output.write(bs.getString());
 
 		output.close();
 
