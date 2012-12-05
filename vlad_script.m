@@ -9,16 +9,15 @@
 
 
 % first of all, lets get a list of all video files
-avi_files = dir('*.avi');
+avi_files = dir('*.MOV');
 
 % Insert diameter/radius here
-r = input('Insert diameter: ');
-radius = r/2;
+%r = input('Insert diameter: ');
+%rad = r/2;
 
 % Define circle mask, first dimension of image
 % Keep this thing close (bit bigger) to diameter
-rows = r+9;
-cols = r+9;
+
 
 % main loop over all video files.
 for file_number = 1:length(avi_files)
@@ -27,7 +26,7 @@ for file_number = 1:length(avi_files)
     filename = avi_files(file_number).name;
     
     % Read movie file, insanely stupid variable names...sorry
-    vlad=mmreader(filename);
+    vlad=VideoReader(filename);
 	
 	lastFrame=read(vlad, Inf);
 	numFrames=vlad.NumberOfFrames;
@@ -38,7 +37,19 @@ for file_number = 1:length(avi_files)
     
     % grab one frame in middle of movie
     %frame=videovlad(:,:,:,round(number_frames/2));
-	frame= read(vlad,round(numFrames/2));
+	
+	
+	f1 = read(vlad,1);
+	f2 = read(vlad,2);
+	f1 = max(f1,f2);
+	
+	for vid = 3:numFrames
+		f2 = read (vlad,vid);
+		f1 = max(f1,f2);
+	end
+	
+	frame = f1;
+	%frame= read(vlad,20);
     
     % ...and make it one dimensional.
     frame= frame(:,:,1);
@@ -50,27 +61,17 @@ for file_number = 1:length(avi_files)
     % Keep this thing close (bit bigger) to diameter
     % rows = 320;
     % cols = 320;
+	
+	
+	
+	
+	e = edge(frame, 'sobel');
+	
+	radii = 350:4:420;
+	h = circle_hough(e, radii, 'same', 'normalise');
+	peaks = circle_houghpeaks(h, radii, 'npeaks', 1);
     
-    % where to put the circle
-    center = [rows/2 cols/2];  % In [X,Y] coordinates
-    
-    % Draw that shizzle!
-    [xMat,yMat] = meshgrid(1:cols,1:rows);
-    distFromCenter = sqrt((xMat-center(1)).^2 + (yMat-center(2)).^2);
-    circleMat = distFromCenter<=radius;
-    
-    % define mask. Convert to double precision
-    mask=double(circleMat);
-
-    % Main step! Normalized cross correlation!
-    % find mask inside frame!
-    xcorrelation=normxcorr2(mask,frame);
-    
-    % find maximum correlation value
-    % then give us where it is located (row/col)
-    [rmax cmax] = find(xcorrelation == [max(max(xcorrelation))]);
-
-    
+        
     % From here:
     % procede with that information, and draw a circle inside
     % a rectangular canvas with same size as movie.
@@ -83,17 +84,21 @@ for file_number = 1:length(avi_files)
     cols_new = get(vlad,'Width');
     
     % Radius should be still same
-    radius = radius;
+	for peak = peaks
+		radius = peak(3);
     
     % Shift the center of circle by value given from 
     % maximum of cross-correlation.
-    center = [cmax-rows/2 rmax-cols/2]; 
+		center = [peak(1) peak(2)]; 
+	end
+		
     
     % Draw the circle on a canvas the same size as your video!
     [xMat,yMat] = meshgrid(1:cols_new,1:rows_new);
     distFromCenter = sqrt((xMat-center(1)).^2 + (yMat-center(2)).^2);
     circleMat_new = distFromCenter<=radius;
-    
+	
+   
     % Again conversion to double, final mask!
     fitted_mask=double(circleMat_new);
     
@@ -105,9 +110,9 @@ for file_number = 1:length(avi_files)
 %    dirname=strread(filename,'%s','delimiter','.');
 %    mkdir(char(dirname(1)));
     
-    name = filename(1:end-8);
+    name = filename(1:end-4);
     writerObj = VideoWriter(strcat('./',name,'.avi'));
-    writerObj.FrameRate =5;
+    writerObj.FrameRate =20;
     open(writerObj);
     
        
@@ -118,6 +123,7 @@ for file_number = 1:length(avi_files)
         %read frame iteratively
         %oriframe= videovlad(:,:,:,k);
 		oriframe= read(vlad,k);
+		oriframe = rgb2gray(oriframe);
         oriframe=oriframe(:,:,1);
         
         % MAIN FUNCTION! Multiply mask (element wise)
@@ -128,7 +134,7 @@ for file_number = 1:length(avi_files)
         masked_f=im2double(oriframe).*fitted_mask + white_mask;
         
         % crop image to only show important part
-        masked_f = imcrop(masked_f,[cmax-rows rmax-cols rows cols]);
+        masked_f = imcrop(masked_f,[center(1)-radius-20 center(2)-radius-20 radius*2+40 radius*2+40]);
           
       %  masked_f=im2uint8(masked_f);
 
