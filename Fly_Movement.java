@@ -19,6 +19,8 @@ import java.util.Map.Entry;
 public class Fly_Movement implements PlugInFilter {
 
 	private Detect_Border_CF db = new Detect_Border_CF();
+	
+	private boolean [] settings = Batch_Run.bord;
 
 	ImagePlus imp;
 
@@ -145,24 +147,40 @@ public class Fly_Movement implements PlugInFilter {
 		ipMo.erode();
 
 		rt.reset();
+		
+		boolean m;
+		boolean w;
+		
+		double movWat = 0;
+		double movSug = 0;
+		double movAll = 0;
+		
+		if (settings[0] == true || settings[1] == true) {
 
-		float[] xPoints = db.getXPointsWat(); // x coordinates of the calculates
-												// ROI for the water side
-		float[] yPoints = db.getYPointsWat(); // y coordinates of the calculates
-												// ROI for the water side
+			float[] xPoints = db.getXPointsWat(); // x coordinates of the calculates
+													// ROI for the water side
+			float[] yPoints = db.getYPointsWat(); // y coordinates of the calculates
+													// ROI for the water side
 
-		double width = (double) xPoints[3]; // width of the image
+			double width = (double) xPoints[3]; // width of the image
 
-		boolean w = true; // parameter that is TRUE on water side
-		boolean m = true; // parameter that is TRUE when moving
+			w = true; // parameter that is TRUE on water side
+			m = true; // parameter that is TRUE when moving
 
-		// counts moving particles on water side
-		double movWat = analyseRoi(width, yPoints, ipMo, m, w);
+			// counts moving particles on water side
+			movWat = analyseRoi(width, yPoints, ipMo, m, w);
 
-		w = false; // change to sugar side
+			w = false; // change to sugar side
 
-		// counts moving particles on sugar side
-		double movSug = analyseRoi(width, yPoints, ipMo, m, w);
+			// counts moving particles on sugar side
+			movSug = analyseRoi(width, yPoints, ipMo, m, w);
+		
+		} else if (settings[2] == true) {
+		
+			m = true;
+			movAll = analyseFrame (ipMo, m);
+		
+		}
 
 		/*
 		 * Calculate the Maximum between the two frames, in order to get the
@@ -181,31 +199,55 @@ public class Fly_Movement implements PlugInFilter {
 		ipSt.dilate();
 
 		rt.reset();
-
-		w = true;
-		m = false;
-
-		// counts staying particles on water side
-		double stayWat = analyseRoi(width, yPoints, ipSt, m, w);
-
-		// change to sugar side
-		w = false;
-
-		// counts staying particles on sugar side
-		double staySug = analyseRoi(width, yPoints, ipSt, m, w);
-
+		
 		// ArrayList that saves the numbers for the TreeMap numbersForFrame
 		ArrayList<Double> numbers = new ArrayList<Double>();
-
-		// calculate a ratio for the sugar and water side
-		double ratioSug = calculate(movSug, staySug, numbers);
-		double ratioWat = calculate(movWat, stayWat, numbers);
-
+		
 		// ArrayList that saves the ratios for sugar and water side
 		ArrayList<Double> ratio = new ArrayList<Double>();
+		
+		double stayWat;
+		double staySug;
+		double stayAll;
+		
+		if (settings[0] == true || settings[1] == true) {
+		
+			float[] xPoints = db.getXPointsWat(); // x coordinates of the calculates
+													// ROI for the water side
+			float[] yPoints = db.getYPointsWat(); // y coordinates of the calculates
+													// ROI for the water side
 
-		ratio.add(ratioSug); // add ratio sugar side
-		ratio.add(ratioWat); // add ratio water side
+			double width = (double) xPoints[3]; // width of the image
+
+			w = true;
+			m = false;
+
+			// counts staying particles on water side
+			stayWat = analyseRoi(width, yPoints, ipSt, m, w);
+
+			// change to sugar side
+			w = false;
+
+			// counts staying particles on sugar side
+			staySug = analyseRoi(width, yPoints, ipSt, m, w);
+
+			// calculate a ratio for the sugar and water side
+			double ratioSug = calculate(movSug, staySug, numbers);
+			double ratioWat = calculate(movWat, stayWat, numbers);
+			
+			ratio.add(ratioSug); // add ratio sugar side
+			ratio.add(ratioWat); // add ratio water side
+		
+		} else if (settings[2] == true) {
+		
+			m = false;
+			stayAll = analyseFrame (ipSt, m);
+			
+			double ratioAll = calculate(movAll, stayAll, numbers);
+			
+			ratio.add(ratioAll);
+		
+		}
 
 		movementRatio.put(current, ratio); // fill TreeMap
 		numbersForFrame.put(current, numbers); // fill TreeMap
@@ -244,6 +286,35 @@ public class Fly_Movement implements PlugInFilter {
 
 	}
 
+	protected double analyseFrame (ImageProcessor ip, boolean m) {
+	
+		double width = ip.getWidth();
+		double height = ip.getHeight();
+		
+		double count = 0.0; // parameter for counting pixels
+		
+		
+		for (int j = 0; j < height; j++) {	
+			for (int k = 0; k <= width; k++) {
+				if (m == true) {	// moving
+					if (ip.getPixel(k, j) == 255) {	// all white pixels indicate flies
+						count++;
+					}
+				} else {	// staying
+					if (ip.getPixel(k, j) == 0) {	// all black pixels indicate flies
+						count++;
+					}
+				}
+			}
+		}
+		
+	//	if(imp.getRoi().contains(x,y)){
+		
+		return count;
+		
+	
+	}
+	
 	// method that counts the pixels that indicate flies
 	protected double analyseRoi(double width, float[] yPoints,
 			ImageProcessor ip, boolean m, boolean w) {
@@ -382,21 +453,39 @@ public class Fly_Movement implements PlugInFilter {
 		File file = new File(path + title.substring(0, title.length() - 2)
 				+ "_denominator.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
+		
+		if (settings[0] == true || settings[1] == true) {
+		
+			output.write("Frame" + "\t" + "Moving_Sugar" + "\t" + "Staying_Sugar"
+					+ "\t" + "Denominator_Sugar" + "\t" + "Numerator_Sugar" + "\t"
+					+ "Moving_Water" + "\t" + "Staying_Water" + "\t"
+					+ "Denominator_Water" + "\t" + "Numerator_Water" + "\n");
 
-		output.write("Frame" + "\t" + "Moving Sugar" + "\t" + "Staying Sugar"
-				+ "\t" + "Denominator Sugar" + "\t" + "Numerator Sugar" + "\t"
-				+ "Moving Water" + "\t" + "Staying Water" + "\t"
-				+ "Denominator Water" + "\t" + "Numerator Water" + "\n");
+			for (Entry<Integer, ArrayList<Double>> entry : numbersForFrame
+					.entrySet()) {
+				output.write(((Integer) entry.getKey()).intValue() + "\t");
 
-		for (Entry<Integer, ArrayList<Double>> entry : numbersForFrame
-				.entrySet()) {
-			output.write(((Integer) entry.getKey()).intValue() + "\t");
-
-			for (int k = 0; k < entry.getValue().size(); k++) {
-				output.write(((Double) entry.getValue().get(k)).doubleValue()
+				for (int k = 0; k < entry.getValue().size(); k++) {
+					output.write(((Double) entry.getValue().get(k)).doubleValue()
 						+ "\t");
+				}
+				output.write("\n");
 			}
-			output.write("\n");
+		} else if (settings[2] == true) {
+		
+			output.write("Frame" + "\t" + "Moving" + "\t" + "Staying"
+					+ "\t" + "Denominator" + "\t" + "Numerator" + "\n");
+
+			for (Entry<Integer, ArrayList<Double>> entry : numbersForFrame
+					.entrySet()) {
+				output.write(((Integer) entry.getKey()).intValue() + "\t");
+
+				for (int k = 0; k < entry.getValue().size(); k++) {
+					output.write(((Double) entry.getValue().get(k)).doubleValue()
+						+ "\t");
+				}
+				output.write("\n");
+			}
 		}
 
 		output.close();
@@ -413,17 +502,36 @@ public class Fly_Movement implements PlugInFilter {
 				+ "_movingRatio.txt");
 		java.io.Writer output = new BufferedWriter(new FileWriter(file));
 
-		output.write("Frame" + "\t" + "Moving Rate Sugar" + "\t"
-				+ "Moving Rate Water" + "\n");
+		if (settings[0] == true || settings[1] == true) {
+		
+			output.write("Frame" + "\t" + "Moving_Rate_Sugar" + "\t"
+					+ "Moving_Rate_Water" + "\n");
 
-		for (Entry<Integer, ArrayList<Double>> entry : movementRatio.entrySet()) {
+			for (Entry<Integer, ArrayList<Double>> entry : movementRatio.entrySet()) {
 
-			output.write((((Integer) entry.getKey()).intValue()) + "\t");
-			for (int k = 0; k < entry.getValue().size(); k++) {
-				output.write(((Double) entry.getValue().get(k)).doubleValue()
+				output.write((((Integer) entry.getKey()).intValue()) + "\t");
+				for (int k = 0; k < entry.getValue().size(); k++) {
+					output.write(((Double) entry.getValue().get(k)).doubleValue()
 						+ "\t");
+				}
+				output.write("\n");
 			}
-			output.write("\n");
+		
+		} else if (settings[2] == true) {
+		
+			output.write("Frame" + "\t" + "Moving_Rate" + "\n");
+
+			for (Entry<Integer, ArrayList<Double>> entry : movementRatio.entrySet()) {
+
+				output.write((((Integer) entry.getKey()).intValue()) + "\t");
+				for (int k = 0; k < entry.getValue().size(); k++) {
+					output.write(((Double) entry.getValue().get(k)).doubleValue()
+						+ "\t");
+				}
+				output.write("\n");
+			}
+		
+		
 		}
 
 		output.close();

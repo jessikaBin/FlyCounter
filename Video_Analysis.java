@@ -8,6 +8,7 @@ import ij.plugin.filter.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 
 /**
@@ -36,7 +37,13 @@ public class Video_Analysis implements PlugInFilter {
 											// should be applied
 	private boolean det = Batch_Run.det; // variable, if preference index should
 											// be calculated
+											
+	private boolean [] settings = Batch_Run.bord;
 
+	// TreeMap, that saves current slice as key and the corresponding fly
+	// numbers as value										
+	protected TreeMap <Integer, Double> countedFlies = new TreeMap <Integer, Double> ();										
+											
 	// TreeMap, that saves current slice as key and the corresponding preference
 	// index as value
 	protected TreeMap<Integer, Double> preferenceIndex = new TreeMap<Integer, Double>();
@@ -70,6 +77,13 @@ public class Video_Analysis implements PlugInFilter {
 		int stackSize = imp.getStackSize(); // get number of frames
 		int curr = 2; // variable for starting frame of substack
 
+						// int startX = 5;
+				// int startY = 5;
+				// PolygonRoi pr = new PolygonRoi(startX, startY, imp);
+				// pr.grow(int sx, int sy) 
+			//	imp.setRoi(pr);
+	//	new WaitForUserDialog("Title", "Do something, then click OK.").show();
+		
 		for (int i = 2; i <= stackSize; i++) { // start with frame 2, because
 												// frame 1 is black
 			imp.setSlice(i); // current slice is set
@@ -104,6 +118,14 @@ public class Video_Analysis implements PlugInFilter {
 				fm.outputRatios(imp); // output movement ratios
 				fm.outputNumbers(imp); // output denominators
 				// fm.createChannelVideo();
+			} catch (IOException e) {
+				System.err.println("Problem with writing the file");
+			}
+		}
+		
+		if (det == true) {
+			try {
+				outputFlies(imp);
 			} catch (IOException e) {
 				System.err.println("Problem with writing the file");
 			}
@@ -194,7 +216,7 @@ public class Video_Analysis implements PlugInFilter {
 		// measurements: area & circularity, options: show nothing, minSize:
 		// flies not smaller than 100, maxSize: flies not bigger than 800,
 		// minCirc/maxCirc: flies have circularity between 0.5 and 0.9
-		rt = Detect_Border_CF.tableAnalyser(imp, rt, 8193, 0, 100, 800, 0.5,
+		rt = Detect_Border_CF.tableAnalyser(imp, rt, 8193, 0, 250, 800, 0.5,
 				0.9);
 
 		String[] splitt = new String[3];
@@ -229,7 +251,7 @@ public class Video_Analysis implements PlugInFilter {
 	public void startAnalysis(ImageProcessor ip, ImagePlus imp, int curr) {
 
 		int stackSize = imp.getStackSize(); // get number of frames
-
+		preferenceIndex.clear();
 		// perform analysis from first frame with flies until the end
 		for (int i = curr; i <= stackSize; i++) {
 			imp.setSlice(i); // current slice is set
@@ -255,27 +277,41 @@ public class Video_Analysis implements PlugInFilter {
 	// movement analysis
 	private void performAnalysis(ImageProcessor ip, ImagePlus imp, int i,
 			TreeMap<Integer, Double> preferenceIndex) {
+			
+		
 
 		if (det == true) { // if preference index should be calculated
 
 			ResultsTable rt = Analyzer.getResultsTable(); // create resultsTable
 
-			prWater = fm.setWaterRoi();
-			imp.setRoi(prWater); // set ROI for water side
-			df.run(ip); // flies are detected
-			double wat = df.getCountedFlies(); // number of flies on water side
+			if (settings[0] == true || settings[1] == true) {
+				prWater = fm.setWaterRoi();
+				imp.setRoi(prWater); // set ROI for water side
+				df.run(ip); // flies are detected
+				double wat = df.getCountedFlies(); // number of flies on water side
 
-			imp.killRoi();
+				imp.killRoi();
 
-			prSugar = fm.setSugarRoi(ip, rt);
-			imp.setRoi(prSugar); // set ROI for sugar side
-			df.run(ip); // flies are detected
-			double sug = df.getCountedFlies(); // number of flies in sugar side
+				prSugar = fm.setSugarRoi(ip, rt);
+				imp.setRoi(prSugar); // set ROI for sugar side
+				df.run(ip); // flies are detected
+				double sug = df.getCountedFlies(); // number of flies in sugar side
+				
+				double flies = sug + wat;
 
-			double prefInd = (sug - wat) / (sug + wat); // calculation of
+				double prefInd = (sug - wat) / (sug + wat); // calculation of
 														// preference index
-			preferenceIndex.put(i, prefInd); // fill TreeMap for preference
+				preferenceIndex.put(i, prefInd); // fill TreeMap for preference
 												// index
+				countedFlies.put(i, flies); // fill TreeMap for counted flies
+											
+			}
+			
+			else if (settings[2] == true || settings[3] == true) {
+				df.run(ip); // flies are detected
+				double flies = df.getCountedFlies(); // number of flies in frame
+				countedFlies.put(i, flies); // fill TreeMap for counted flies
+			}
 		}
 
 		if ((mov == true) && (i <= imp.getStackSize() - 1)) { // if movement
@@ -284,5 +320,25 @@ public class Video_Analysis implements PlugInFilter {
 			fm.run(ip); // start movement detection
 			movementRatio = fm.getMovementRatio();
 		}
+	}
+	
+	public void outputFlies(ImagePlus imp) throws IOException {
+
+		String title = imp.getTitle();
+		String path = Batch_Run.myDir2;	// input path
+
+		File file = new File(path + title.substring(0, title.length() - 2)
+				+ "_countedFlies" + ".txt");
+		java.io.Writer output = new BufferedWriter(new FileWriter(file));
+
+		output.write("Slice" + "\t" + "Counted_Flies" + "\n");
+
+		for (Entry<Integer, Double> entry : countedFlies.entrySet()) {
+
+			output.write((((Integer) entry.getKey()).intValue()) + "\t" +((Double) entry.getValue()).doubleValue() + "\n");
+		}
+
+		output.close();
+
 	}
 }

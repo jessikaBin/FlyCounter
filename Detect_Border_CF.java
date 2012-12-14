@@ -5,6 +5,7 @@ import ij.process.*;
 import ij.plugin.filter.*;
 import java.util.*;
 import ij.measure.CurveFitter;
+import ij.gui.PolygonRoi;
 
 /**
  * This PlugIn Detect_Border_CF detects the border between the sugar and water
@@ -13,6 +14,8 @@ import ij.measure.CurveFitter;
 public class Detect_Border_CF implements PlugInFilter {
 
 	ImagePlus imp;
+	
+	boolean [] settings = Batch_Run.bord;
 
 	public float[] xPointsWat = new float[4]; // x coordinates for ROI of the
 												// water side
@@ -26,6 +29,8 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	private float xwidth = (float) 0.0; // float width of image
 	private double lowerThreshold; // threshold for finding the border
+	private double borShift;
+	private int check;
 	public double[] params = new double[2]; // array that includes the
 											// calculated parameters of the
 											// fitted line
@@ -66,11 +71,12 @@ public class Detect_Border_CF implements PlugInFilter {
 
 		// set threshold
 		lowerThreshold = 30.0; // starting threshold for border search
-		setThresh(lowerThreshold, ip, imp, x, y, rwidth, rheight); // applying
+		int slice = imp.getCurrentSlice();
+		setThresh(lowerThreshold, ip, imp, x, y, rwidth, rheight, slice); // applying
 																	// setThresh
 		// method
 
-		calculateBorder(ip, imp); // applying drawBorder method
+		chooseBorder(ip, imp); // applying drawBorder method
 
 	}
 
@@ -93,7 +99,7 @@ public class Detect_Border_CF implements PlugInFilter {
 
 	// method that sets the right threshold so that the object is found
 	private double setThresh(double min, ImageProcessor ip, ImagePlus imp,
-			int x, int y, int rwidth, int rheight) {
+			int x, int y, int rwidth, int rheight, int current) {
 
 		// setting the threshold
 		double maxThreshold = 255.0; // upper threshold bound
@@ -105,24 +111,43 @@ public class Detect_Border_CF implements PlugInFilter {
 		// measurements: area & center of mass, options: show nothing, minSize:
 		// particle not smaller than 3, maxSize: particle not bigger than 200,
 		// minCirc/maxCirc: no defined circularity
-		rt = tableAnalyser(imp, rt, 65, 0, 3, 200, 0, 1);
+		rt = tableAnalyser(imp, rt, 65, 0, 3, 400, 0, 1);
 
+		
 		// invoke method recursive with a lower threshold, if too less particles
 		// are
 		// thresholded
 		if (rt.getCounter() < 2) {
-			min--;
-			imp.setRoi(x, y, rwidth, rheight);
-			min = setThresh(min, ip, imp, x, y, rwidth, rheight);
+			int slice = imp.getCurrentSlice();
+			if (check != 6 || (check == 6 && slice != current)){
+				min--;
+				imp.setRoi(x, y, rwidth, rheight);
+				check = 2;
+				min = setThresh(min, ip, imp, x, y, rwidth, rheight, slice);
+			} else if (check == 6 && slice == current) {
+				imp.setSlice(imp.getCurrentSlice()+1);
+				imp.setRoi(x, y, rwidth, rheight);
+				min = setThresh(min, ip, imp, x, y, rwidth, rheight, slice);
+			
+			}
 		}
 
 		// invoke method recursive with a higher threshold, if too many
 		// particles
 		// are thresholded
 		else if (rt.getCounter() > 6) {
-			min++;
-			imp.setRoi(x, y, rwidth, rheight);
-			min = setThresh(min, ip, imp, x, y, rwidth, rheight);
+			int slice = imp.getCurrentSlice();
+			if (check != 2 || (check == 2 && slice != current)){
+				min++;
+				imp.setRoi(x, y, rwidth, rheight);
+				check = 6;
+				min = setThresh(min, ip, imp, x, y, rwidth, rheight, slice);
+			} else if (check == 2 && slice == current) {
+				imp.setSlice(imp.getCurrentSlice()+1);
+				imp.setRoi(x, y, rwidth, rheight);
+				min = setThresh(min, ip, imp, x, y, rwidth, rheight, slice);
+			
+			}
 		}
 
 		// right threshold for finding the border is set
@@ -191,28 +216,87 @@ public class Detect_Border_CF implements PlugInFilter {
 	 */
 	protected TreeMap<Double, Double> calculateCoordinates() {
 
-		double begin = Math.floor(Math.min(params[0], params[0] + params[1]
+		if (settings[0] == true) {
+			double begin = Math.floor(Math.min(params[0], params[0] + params[1]
 				* xwidth)); // lower y value
-		double end = Math.floor(Math.max(params[0], params[0] + params[1]
+			double end = Math.floor(Math.max(params[0], params[0] + params[1]
 				* xwidth)); // higher y value
 
-		for (double i = begin; i <= end; i++) {
-			double value = (i - params[0]) / params[1]; // calculate x value
-			borderValues.put(i, value); // fill TreeMap
+			for (double i = begin; i <= end; i++) {
+				double value = (i - params[0]) / params[1]; // calculate x value
+				borderValues.put(i, value); // fill TreeMap
+			}
+			
+		} else if (settings[1] == true) {
+		
+			double shift = getShift();
+		
+			double begin = Math.floor(Math.min(params[0]-shift, (params[0] + params[1]
+				* xwidth)-shift)); // lower y value
+			double end = Math.floor(Math.max(params[0]-shift, (params[0] + params[1]
+				* xwidth)-shift)); // higher y value
+
+			for (double i = begin; i <= end; i++) {
+				double value = (i - params[0] + shift) / params[1]; // calculate x value
+				borderValues.put(i, value); // fill TreeMap
+			}
+		
+		
 		}
 
 		return borderValues;
 	}
 
 	// method to draw the border
-	private void calculateBorder(ImageProcessor ip, ImagePlus imp) {
-
+	private void chooseBorder(ImageProcessor ip, ImagePlus imp) {
+			
+		if (settings[0] == true) {	
+		
+			double mm = 0.0;	// no border shift
+			double shift = calcShift(mm);
+			calculateBorder (ip, imp, shift);
+			
+			
+		} else if (settings[1] == true) {
+		
+			double mm = 3.5;	// shift the border 1.5mm
+			double shift = calcShift(mm);
+			calculateBorder (ip, imp, shift);
+		
+		}	else if (settings[2] == true) {
+			// no border to detect
+		}	else if (settings[3] == true) {
+			
+				// int startX = 5;
+				// int startY = 5;
+				// PolygonRoi pr = new PolygonRoi(startX, startY, imp);
+				// imp.setRoi(pr);
+		}
+	}
+	
+	private double calcShift (double mm) {
+	
+		int diameter = Batch_Run.getDiam ();
+		borShift = ((double)diameter/75)* mm ;
+	
+		return borShift;
+		
+	}
+	
+	protected double getShift () {
+	
+		return borShift;
+		
+	}
+	
+	private void calculateBorder(ImageProcessor ip, ImagePlus imp, double shift) {
+	
 		// // array with x coordinates of water side
 		xPointsWat = new float[] { 0, 0, xwidth, xwidth };
 
 		// array with y coordinates of water side
-		yPointsWat = new float[] { 0, (float) params[0],
-				(float) params[0] + (float) params[1] * xwidth, 0 };
+		yPointsWat = new float[] { 0, (float) params[0] - (float) shift,
+				((float) params[0] + (float) params[1] * xwidth) - (float) shift , 0 };
 
 		// array with x coordinates of sugar side
 		xPointsSug = new float[] { xPointsWat[0], xPointsWat[1], xPointsWat[2],
@@ -224,7 +308,7 @@ public class Detect_Border_CF implements PlugInFilter {
 		float c = xPointsWat[2];
 		float d = yPointsWat[2] + (float) 1.0;
 		yPointsSug = new float[] { a, b, c, d };
-
+	
 	}
 
 	// get-method to get x coordinates of water side

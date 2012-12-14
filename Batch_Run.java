@@ -25,7 +25,14 @@ public class Batch_Run implements PlugIn {
 	protected static String filename = ""; // source filename
 	protected static String myDir1 = ""; // Source Directory
 	protected static String myDir2 = ""; // Saving Directory
-
+	
+	// HashMap that saves each video as key and the diameters of the arena as value
+	protected static HashMap <String, String> diameters = new HashMap <String, String> ();
+	
+	protected static int arenaDiam; // parameter for diameter for the arena
+	
+	protected static boolean [] bord = borderSetting(); // parameter for border setting
+	
 	protected static boolean[] res = inputDialog(); // parameter for types of
 													// analysis
 
@@ -55,7 +62,7 @@ public class Batch_Run implements PlugIn {
 			return;
 		}
 		
-		IJ.log("The source image folder chosen was" + myDir1); // opens the log
+		IJ.log("The source image folder chosen was " + myDir1); // opens the log
 																// window
 
 		myDir2 = IJ.getDirectory("Select Image Saving Folder..."); // Opening
@@ -67,7 +74,9 @@ public class Batch_Run implements PlugIn {
 			return; // If no saving folder is selected the plugin stops here
 		}
 		
-		IJ.log("The saving folder chosen was" + myDir2);
+		IJ.log("The saving folder chosen was " + myDir2);
+		
+		diamRead ();
 
 		// do analysis for each .avi file in the chosen folder
 		for (int FileNumber = 0; FileNumber < myListSources.length; FileNumber++) {
@@ -76,13 +85,18 @@ public class Batch_Run implements PlugIn {
 																// progress
 			IJ.log((FileNumber + 1) + ":" + myListSources[FileNumber]);
 			IJ.showStatus(FileNumber + "/" + myListSources.length);
+			
 
 			if (myListSources[FileNumber].contains(".avi")
-					&& !(myListSources[FileNumber].contains(".MOV.avi"))) {
+					&& !(myListSources[FileNumber].contains(".MOV.avi"))
+					&& diameters.containsKey(myListSources[FileNumber])) {
 
 				filename = myListSources[FileNumber].substring(0,
 						myListSources[FileNumber].length() - 4);
-
+						
+				arenaDiam = Integer.parseInt(diameters.get(myListSources[FileNumber]));
+				
+			
 				AVI_Reader_WD ar = new AVI_Reader_WD(); // reading the AVI file
 				ar.run("");
 				ImagePlus myImPlus = ar.getImagePlus();
@@ -97,12 +111,12 @@ public class Batch_Run implements PlugIn {
 				// ImagePlus imp2 = bs.getImp();
 				// ImageProcessor ip2 = imp2.getProcessor();
 
-				if (det == true) {
+				if (det == true && (bord[0]==true||bord[1]==true)) {
 					try {
 						outputFile(myDir2, myImPlus); // write the output
 														// .xls-file
 					} catch (IOException e) {
-						System.err.println("Problem with writing the file");
+						IJ.error("Problem with writing the file");
 					}
 				}
 
@@ -117,7 +131,82 @@ public class Batch_Run implements PlugIn {
 
 		IJ.log("Completed");
 	}
+	
+	// method to open input dialog for diameter file
+	// file is tab-separated, each line has the following infos for 
+	// one video: Path	Video	Diameter
+	public static void diamRead () {
+	
+		String file = IJ.openAsString("");
+		String [] videos = file.split("\n");
+		String [] diam = new String [videos.length];
+		String [] vid = new String [videos.length];
+		
+		for (int i = 0; i < videos.length; i++) {
+			String [] line = videos[i].split("\t");
+			vid[i] = line [1];
+			vid[i] = vid[i].replaceAll(".mov", ".avi");
+			diam[i] = line [2];
+			
+			diameters.put(vid[i],diam[i]);
+		}
+	}
+	
+	// method to get arena diameter
+	public static int getDiam () {
+	
+		return arenaDiam;
+		
+	}
 
+	public static boolean[] borderSetting() {
+	
+		boolean real;
+		boolean shift;
+		boolean without;
+		boolean manual;
+		
+		boolean[] input = new boolean[4];
+
+		GenericDialog gdBor = new GenericDialog("Border options");
+
+		gdBor.addCheckbox("Choose real border (not shifted)", false);
+		gdBor.addCheckbox("Choose shifted border (1.5 mm)", false);
+		gdBor.addCheckbox("Choose no border (no Pi calculation possible, only fly counting)", false);
+		gdBor.addCheckbox("Choose manual ROI (no Pi calculation possible, only fly counting)", false);
+
+		gdBor.showDialog();
+		if (gdBor.wasCanceled()) {
+			IJ.error("No border option is chosen");
+		}
+		real = gdBor.getNextBoolean(); // real border is assigned to the first
+											// checkbox
+		shift = gdBor.getNextBoolean(); // shifted border is assigned to the
+											// second checkbox
+		without = gdBor.getNextBoolean(); // without border is assigned to the
+											// third checkbox
+		manual = gdBor.getNextBoolean(); // manual ROI is assigned to the
+											// fourth checkbox
+
+		if ((real == true && shift == false && without == false && manual == false)||
+			(real == false && shift == true && without == false && manual == false)||
+			(real == false && shift == false && without == true && manual == false)||
+			(real == false && shift == false && without == false && manual == true)) {
+			
+			input[0] = real;
+			input[1] = shift;
+			input[2] = without;
+			input[3] = manual;
+		} else {
+			IJ.error("Only one border option can be chosen!");
+			borderSetting();
+		}
+		
+		return input;
+		
+	}
+	
+	
 	// method for opening an inputDialog, that lets the user chose between the
 	// analyzing types
 	public static boolean[] inputDialog() {
@@ -134,15 +223,20 @@ public class Batch_Run implements PlugIn {
 
 		gdIn.showDialog();
 		if (gdIn.wasCanceled()) {
-			System.err.println("No results are chosen");
+			IJ.error("No results are chosen");
 		}
 		movement = gdIn.getNextBoolean(); // movement is assigned to the first
 											// checkbox
 		detection = gdIn.getNextBoolean(); // fly detection is assigned to the
 											// second checkbox
 
-		input[0] = movement;
-		input[1] = detection;
+		if (movement == false && detection == false) {
+			IJ.error("No results are chosen");
+			inputDialog();
+		} else {
+			input[0] = movement;
+			input[1] = detection;
+		}
 
 		return input;
 
@@ -178,7 +272,7 @@ public class Batch_Run implements PlugIn {
 		Set set = prefInd.entrySet();
 		Iterator i = set.iterator();
 
-		output.write("Slice" + "\t" + "Preference Index" + "\n");
+		output.write("Slice" + "\t" + "Preference_Index" + "\n");
 
 		while (i.hasNext()) {
 			Map.Entry me = (Map.Entry) i.next();

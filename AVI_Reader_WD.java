@@ -254,6 +254,7 @@ public class AVI_Reader_WD extends VirtualStack implements PlugIn {
 											// grayscale
 	private boolean flipVertical = false; // whether to flip image vertical
 	private boolean isVirtual = true; // whether to open as virtual stack
+
 	// the input file
 	private RandomAccessFile raFile;
 	private String raFilePath;
